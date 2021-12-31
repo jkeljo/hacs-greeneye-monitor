@@ -1,4 +1,5 @@
 {
+  "version": "0.1",
   "domain": "greeneye_monitor",
   "name": "GreenEye Monitor (GEM)",
   "documentation": "https://www.home-assistant.io/integrations/greeneye_monitor",

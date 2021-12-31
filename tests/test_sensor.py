@@ -1,7 +1,7 @@
 """Tests for greeneye_monitor sensors."""
 from unittest.mock import AsyncMock, MagicMock
 
-from homeassistant.components.greeneye_monitor.sensor import (
+from custom_components.greeneye_monitor.sensor import (
     DATA_PULSES,
     DATA_WATT_SECONDS,
 )

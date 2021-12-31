@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-from homeassistant.components.greeneye_monitor import (
+from custom_components.greeneye_monitor import (
     CONF_CHANNELS,
     CONF_COUNTED_QUANTITY,
     CONF_COUNTED_QUANTITY_PER_PULSE,

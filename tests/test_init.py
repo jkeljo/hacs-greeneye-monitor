@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from homeassistant.components.greeneye_monitor import (
+from custom_components.greeneye_monitor import (
     CONF_MONITORS,
     CONF_NUMBER,
     CONF_SERIAL_NUMBER,

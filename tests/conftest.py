@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from homeassistant.components.greeneye_monitor import DOMAIN
+from custom_components.greeneye_monitor import DOMAIN
 from homeassistant.const import (
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_TEMPERATURE,
