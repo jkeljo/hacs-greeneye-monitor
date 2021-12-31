@@ -1,1 +1,1 @@
-"""Tests for GreenEye Monitor (GEM) integration."""
+"""Tests for the GreenEye Monitor integration."""
