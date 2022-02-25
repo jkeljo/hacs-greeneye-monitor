@@ -1,0 +1,12 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "Choose the port on which to listen for packets from your GEM(s).",
+                "data": {
+                    "port": "[%key:common::config_flow::data::port%]"
+                }
+            }
+        }
+    }
+}
