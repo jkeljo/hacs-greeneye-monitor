@@ -4,7 +4,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 import pytest
-from homeassistant.components.greeneye_monitor import DOMAIN
+from custom_components.greeneye_monitor import DOMAIN
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 

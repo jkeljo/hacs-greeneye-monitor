@@ -1,3 +1,4 @@
 homeassistant
 pre-commit
 reorder-python-imports
+greeneye-monitor

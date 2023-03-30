@@ -1,8 +1,8 @@
 """Tests for greeneye_monitor sensors."""
 from unittest.mock import AsyncMock
 
-from homeassistant.components.greeneye_monitor.sensor import DATA_PULSES
-from homeassistant.components.greeneye_monitor.sensor import DATA_WATT_SECONDS
+from custom_components.greeneye_monitor.sensor import DATA_PULSES
+from custom_components.greeneye_monitor.sensor import DATA_WATT_SECONDS
 from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as get_entity_registry

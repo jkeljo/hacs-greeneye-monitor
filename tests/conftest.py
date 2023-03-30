@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-from homeassistant.components.greeneye_monitor import DOMAIN
+from custom_components.greeneye_monitor import DOMAIN
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import UnitOfElectricPotential
 from homeassistant.const import UnitOfPower
@@ -14,6 +14,15 @@ from homeassistant.helpers.entity_registry import async_get as get_entity_regist
 from homeassistant.helpers.entity_registry import RegistryEntry
 
 from .common import add_listeners
+
+
+pytest_plugins = "pytest_homeassistant_custom_component"
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(hass, enable_custom_integrations):
+    """Allow custom integrations to load"""
+    yield
 
 
 def assert_sensor_state(

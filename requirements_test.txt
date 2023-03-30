@@ -1,2 +1,7 @@
 -r requirements_dev.txt
-pytest-homeassistant-custom-component==0.1.0
+codecov
+coverage
+pytest
+pytest-asyncio
+pytest-cov
+pytest-homeassistant-custom-component
