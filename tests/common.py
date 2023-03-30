@@ -223,6 +223,8 @@ def mock_channel() -> MagicMock:
     channel = mock_with_listeners()
     channel.absolute_watt_seconds = 1000
     channel.polarized_watt_seconds = -400
+    channel.absolute_kilowatt_hours = 42
+    channel.polarized_kilowatt_hours = -50
     channel.watts = None
     return channel
 

@@ -106,7 +106,10 @@ async def test_power_sensor_initially_unknown(
     # This sensor was configured with net metering on, so we should be taking the
     # polarized value
     assert_sensor_state(
-        hass, "sensor.channel_two", STATE_UNKNOWN, {DATA_WATT_SECONDS: -400}
+        hass,
+        "sensor.channel_two",
+        STATE_UNKNOWN,
+        {DATA_WATT_SECONDS: -400},
     )
 
 
@@ -124,6 +127,22 @@ async def test_power_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
     # This sensor was configured with net metering on, so we should be taking the
     # polarized value
     assert_sensor_state(hass, "sensor.channel_two", "120.0", {DATA_WATT_SECONDS: -400})
+
+
+async def test_energy_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
+    """Test that an energy sensor reports its values correctly, including handling net metering."""
+    await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_POWER_SENSORS
+    )
+    monitor = await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
+    monitor.channels[0].watts = 120.0
+    monitor.channels[1].watts = 120.0
+    monitor.channels[0].notify_all_listeners()
+    monitor.channels[1].notify_all_listeners()
+    assert_sensor_state(hass, "sensor.channel_1_energy", "42")
+    # This sensor was configured with net metering on, so we should be taking the
+    # polarized value
+    assert_sensor_state(hass, "sensor.channel_two_energy", "-50")
 
 
 async def test_pulse_counter_initially_unknown(

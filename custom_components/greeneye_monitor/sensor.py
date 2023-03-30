@@ -6,10 +6,12 @@ from typing import Any
 import greeneye
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorStateClass
 from homeassistant.const import CONF_NAME
 from homeassistant.const import CONF_SENSORS
 from homeassistant.const import CONF_TEMPERATURE_UNIT
 from homeassistant.const import UnitOfElectricPotential
+from homeassistant.const import UnitOfEnergy
 from homeassistant.const import UnitOfPower
 from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
@@ -64,6 +66,14 @@ async def async_setup_platform(
             for sensor in channel_configs:
                 entities.append(
                     CurrentSensor(
+                        monitor,
+                        sensor[CONF_NUMBER],
+                        sensor[CONF_NAME],
+                        sensor[CONF_NET_METERING],
+                    )
+                )
+                entities.append(
+                    EnergySensor(
                         monitor,
                         sensor[CONF_NUMBER],
                         sensor[CONF_NAME],
@@ -187,6 +197,36 @@ class CurrentSensor(GEMSensor):
             watt_seconds = self._sensor.absolute_watt_seconds
 
         return {DATA_WATT_SECONDS: watt_seconds}
+
+
+class EnergySensor(GEMSensor):
+    """Entity showing energy usage on one channel of the monitor."""
+
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL
+
+    def __init__(
+        self,
+        monitor: greeneye.monitor.Monitor,
+        number: int,
+        name: str,
+        net_metering: bool,
+    ) -> None:
+        """Construct the entity."""
+        super().__init__(
+            monitor, name + "_energy", "energy", monitor.channels[number - 1], number
+        )
+        self._sensor: greeneye.monitor.Channel = self._sensor
+        self._net_metering = net_metering
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the total number of kilowatt hours measured by this channel."""
+        if self._net_metering:
+            return self._sensor.polarized_kilowatt_hours
+        else:
+            return self._sensor.absolute_kilowatt_hours
 
 
 class PulseCounter(GEMSensor):
