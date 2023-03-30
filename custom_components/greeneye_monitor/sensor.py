@@ -66,7 +66,7 @@ async def async_setup_platform(
             channel_configs = monitor_config[CONF_CHANNELS]
             for sensor in channel_configs:
                 entities.append(
-                    CurrentSensor(
+                    PowerSensor(
                         monitor,
                         sensor[CONF_NUMBER],
                         sensor[CONF_NAME],
@@ -85,7 +85,7 @@ async def async_setup_platform(
             pulse_counter_configs = monitor_config[CONF_PULSE_COUNTERS]
             for sensor in pulse_counter_configs:
                 entities.append(
-                    PulseCounter(
+                    PulseRateSensor(
                         monitor,
                         sensor[CONF_NUMBER],
                         sensor[CONF_NAME],
@@ -95,7 +95,7 @@ async def async_setup_platform(
                     )
                 )
                 entities.append(
-                    Counter(
+                    PulseCountSensor(
                         monitor,
                         sensor[CONF_NUMBER],
                         sensor[CONF_NAME],
@@ -176,7 +176,7 @@ class GEMSensor(SensorEntity):
             self._sensor.remove_listener(self.async_write_ha_state)
 
 
-class CurrentSensor(GEMSensor):
+class PowerSensor(GEMSensor):
     """Entity showing power usage on one channel of the monitor."""
 
     _attr_native_unit_of_measurement = UnitOfPower.WATT
@@ -240,7 +240,7 @@ class EnergySensor(GEMSensor):
             return self._sensor.absolute_kilowatt_hours
 
 
-class PulseCounter(GEMSensor):
+class PulseRateSensor(GEMSensor):
     """Entity showing rate of change in one pulse counter of the monitor."""
 
     _attr_icon = COUNTER_ICON
@@ -298,7 +298,7 @@ class PulseCounter(GEMSensor):
         return {DATA_PULSES: self._sensor.pulses}
 
 
-class Counter(GEMSensor):
+class PulseCountSensor(GEMSensor):
     """Entity showing pulse counts."""
 
     _attr_state_class = SensorStateClass.TOTAL
