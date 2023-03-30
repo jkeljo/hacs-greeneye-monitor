@@ -4,3 +4,15 @@ pythonenv*
 .coverage
 venv
 .venv
+
+# HA files
+.HA_VERSION
+.storage
+automations.yaml
+blueprints/
+configuration.yaml
+home-assistant.log*
+home-assistant_v2.*
+scenes.yaml
+scripts.yaml
+secrets.yaml
