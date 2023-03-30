@@ -1,0 +1,10 @@
+{
+  "domain": "greeneye_monitor",
+  "name": "GreenEye Monitor (GEM)",
+  "documentation": "https://github.com/jkeljo/hacs-greeneye-monitor-2",
+  "issue_tracker": "https://github.com/jkeljo/hacs-greeneye-monitor-2/issues",
+  "dependencies": [],
+  "config_flow": true,
+  "codeowners": ["@jkeljo"],
+  "requirements": []
+}
