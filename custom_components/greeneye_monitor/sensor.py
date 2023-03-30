@@ -22,6 +22,7 @@ from homeassistant.helpers.typing import DiscoveryInfoType
 from .const import CONF_CHANNELS
 from .const import CONF_COUNTED_QUANTITY
 from .const import CONF_COUNTED_QUANTITY_PER_PULSE
+from .const import CONF_DEVICE_CLASS
 from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
 from .const import CONF_NUMBER
@@ -90,6 +91,16 @@ async def async_setup_platform(
                         sensor[CONF_NAME],
                         sensor[CONF_COUNTED_QUANTITY],
                         sensor[CONF_TIME_UNIT],
+                        sensor[CONF_COUNTED_QUANTITY_PER_PULSE],
+                    )
+                )
+                entities.append(
+                    Counter(
+                        monitor,
+                        sensor[CONF_NUMBER],
+                        sensor[CONF_NAME],
+                        sensor[CONF_DEVICE_CLASS],
+                        sensor[CONF_COUNTED_QUANTITY],
                         sensor[CONF_COUNTED_QUANTITY_PER_PULSE],
                     )
                 )
@@ -285,6 +296,41 @@ class PulseCounter(GEMSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return total pulses in the data dictionary."""
         return {DATA_PULSES: self._sensor.pulses}
+
+
+class Counter(GEMSensor):
+    """Entity showing pulse counts."""
+
+    _attr_state_class = SensorStateClass.TOTAL
+
+    def __init__(
+        self,
+        monitor: greeneye.monitor.Monitor,
+        number: int,
+        name: str,
+        device_class: SensorDeviceClass | None,
+        counted_quantity: str,
+        counted_quantity_per_pulse: float,
+    ) -> None:
+        """Construct the entity."""
+        super().__init__(
+            monitor,
+            name + "_count",
+            "count",
+            monitor.pulse_counters[number - 1],
+            number,
+        )
+        self._sensor: greeneye.monitor.PulseCounter = self._sensor
+        self._counted_quantity_per_pulse = counted_quantity_per_pulse
+        self._attr_native_unit_of_measurement = counted_quantity
+        self._attr_device_class = device_class
+
+    @property
+    def native_value(self) -> float | None:
+        if self._sensor.pulses is None:
+            return None
+
+        return self._sensor.pulses * self._counted_quantity_per_pulse
 
 
 class TemperatureSensor(GEMSensor):

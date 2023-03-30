@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import greeneye
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import CONF_NAME
 from homeassistant.const import CONF_PORT
 from homeassistant.const import CONF_SENSORS
@@ -21,6 +23,7 @@ from homeassistant.helpers.typing import ConfigType
 from .const import CONF_CHANNELS
 from .const import CONF_COUNTED_QUANTITY
 from .const import CONF_COUNTED_QUANTITY_PER_PULSE
+from .const import CONF_DEVICE_CLASS
 from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
 from .const import CONF_NUMBER
@@ -54,11 +57,20 @@ VOLTAGE_SENSOR_SCHEMA = vol.Schema(
 
 VOLTAGE_SENSORS_SCHEMA = vol.All(cv.ensure_list, [VOLTAGE_SENSOR_SCHEMA])
 
+
+def deviceClass(value: Any) -> SensorDeviceClass | None:
+    if value is None:
+        return None
+    value = cv.string(value)
+    return SensorDeviceClass(value)
+
+
 PULSE_COUNTER_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NUMBER): vol.Range(1, 4),
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_COUNTED_QUANTITY): cv.string,
+        vol.Optional(CONF_DEVICE_CLASS, default=None): deviceClass,
         vol.Optional(CONF_COUNTED_QUANTITY_PER_PULSE, default=1.0): vol.Coerce(float),
         vol.Optional(CONF_TIME_UNIT, default=UnitOfTime.SECONDS): vol.Any(
             UnitOfTime.SECONDS.value, UnitOfTime.MINUTES.value, UnitOfTime.HOURS.value

@@ -3,6 +3,7 @@
 CONF_CHANNELS = "channels"
 CONF_COUNTED_QUANTITY = "counted_quantity"
 CONF_COUNTED_QUANTITY_PER_PULSE = "counted_quantity_per_pulse"
+CONF_DEVICE_CLASS = "device_class"
 CONF_MONITOR_SERIAL_NUMBER = "monitor"
 CONF_MONITORS = "monitors"
 CONF_NET_METERING = "net_metering"
