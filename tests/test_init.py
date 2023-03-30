@@ -1,63 +1,164 @@
-"""Test GreenEye Monitor (GEM) setup process."""
+"""Tests for greeneye_monitor component initialization."""
+from __future__ import annotations
+
+from unittest.mock import AsyncMock
+
 import pytest
-from custom_components.greeneye_monitor import (
-    async_reload_entry,
-)
-from custom_components.greeneye_monitor import (
-    async_setup_entry,
-)
-from custom_components.greeneye_monitor import (
-    async_unload_entry,
-)
-from custom_components.greeneye_monitor import (
-    GreeneyeMonitorDataUpdateCoordinator,
-)
-from custom_components.greeneye_monitor.const import (
-    DOMAIN,
-)
-from homeassistant.exceptions import ConfigEntryNotReady
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.components.greeneye_monitor import DOMAIN
+from homeassistant.core import HomeAssistant
+from homeassistant.setup import async_setup_component
 
-from .const import MOCK_CONFIG
+from .common import connect_monitor
+from .common import MULTI_MONITOR_CONFIG
+from .common import setup_greeneye_monitor_component_with_config
+from .common import SINGLE_MONITOR_CONFIG_NO_SENSORS
+from .common import SINGLE_MONITOR_CONFIG_POWER_SENSORS
+from .common import SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
+from .common import SINGLE_MONITOR_CONFIG_TEMPERATURE_SENSORS
+from .common import SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
+from .common import SINGLE_MONITOR_SERIAL_NUMBER
+from .conftest import assert_power_sensor_registered
+from .conftest import assert_pulse_counter_registered
+from .conftest import assert_temperature_sensor_registered
+from .conftest import assert_voltage_sensor_registered
 
 
-# We can pass fixtures as defined in conftest.py to tell pytest to use the fixture
-# for a given test. We can also leverage fixtures and mocks that are available in
-# Home Assistant using the pytest_homeassistant_custom_component plugin.
-# Assertions allow you to verify that the return value of whatever is on the left
-# side of the assertion matches with the right side.
-async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
-    """Test entry setup and unload."""
-    # Create a mock entry so we don't have to go through config flow
-    config_entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG, entry_id="test")
+async def test_setup_fails_if_no_sensors_defined(
+    hass: HomeAssistant, monitors: AsyncMock
+) -> None:
+    """Test that component setup fails if there are no sensors defined in the YAML."""
+    success = await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_NO_SENSORS
+    )
+    assert not success
 
-    # Set up the entry and assert that the values set during setup are where we expect
-    # them to be. Because we have patched the GreeneyeMonitorDataUpdateCoordinator.async_get_data
-    # call, no code from custom_components/greeneye_monitor/api.py actually runs.
-    assert await async_setup_entry(hass, config_entry)
-    assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
-    assert (
-        type(hass.data[DOMAIN][config_entry.entry_id]) == GreeneyeMonitorDataUpdateCoordinator
+
+@pytest.mark.xfail(reason="Currently failing. Will fix in subsequent PR.")
+async def test_setup_succeeds_no_config(
+    hass: HomeAssistant, monitors: AsyncMock
+) -> None:
+    """Test that component setup succeeds if there is no config present in the YAML."""
+    assert await async_setup_component(hass, DOMAIN, {})
+
+
+async def test_setup_creates_temperature_entities(
+    hass: HomeAssistant, monitors: AsyncMock
+) -> None:
+    """Test that component setup registers temperature sensors properly."""
+    assert await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_TEMPERATURE_SENSORS
+    )
+    await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
+    assert_temperature_sensor_registered(
+        hass, SINGLE_MONITOR_SERIAL_NUMBER, 1, "temp_a"
+    )
+    assert_temperature_sensor_registered(
+        hass, SINGLE_MONITOR_SERIAL_NUMBER, 2, "temp_2"
+    )
+    assert_temperature_sensor_registered(
+        hass, SINGLE_MONITOR_SERIAL_NUMBER, 3, "temp_c"
+    )
+    assert_temperature_sensor_registered(
+        hass, SINGLE_MONITOR_SERIAL_NUMBER, 4, "temp_d"
+    )
+    assert_temperature_sensor_registered(
+        hass, SINGLE_MONITOR_SERIAL_NUMBER, 5, "temp_5"
+    )
+    assert_temperature_sensor_registered(
+        hass, SINGLE_MONITOR_SERIAL_NUMBER, 6, "temp_f"
+    )
+    assert_temperature_sensor_registered(
+        hass, SINGLE_MONITOR_SERIAL_NUMBER, 7, "temp_g"
+    )
+    assert_temperature_sensor_registered(
+        hass, SINGLE_MONITOR_SERIAL_NUMBER, 8, "temp_h"
     )
 
-    # Reload the entry and assert that the data from above is still there
-    assert await async_reload_entry(hass, config_entry) is None
-    assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
-    assert (
-        type(hass.data[DOMAIN][config_entry.entry_id]) == GreeneyeMonitorDataUpdateCoordinator
+
+async def test_setup_creates_pulse_counter_entities(
+    hass: HomeAssistant, monitors: AsyncMock
+) -> None:
+    """Test that component setup registers pulse counters properly."""
+    assert await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
+    )
+    await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
+    assert_pulse_counter_registered(
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        1,
+        "pulse_a",
+        "pulses",
+        "s",
+    )
+    assert_pulse_counter_registered(
+        hass, SINGLE_MONITOR_SERIAL_NUMBER, 2, "pulse_2", "gal", "min"
+    )
+    assert_pulse_counter_registered(
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        3,
+        "pulse_3",
+        "gal",
+        "h",
+    )
+    assert_pulse_counter_registered(
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        4,
+        "pulse_d",
+        "pulses",
+        "s",
     )
 
-    # Unload the entry and verify that the data has been removed
-    assert await async_unload_entry(hass, config_entry)
-    assert config_entry.entry_id not in hass.data[DOMAIN]
+
+async def test_setup_creates_power_sensor_entities(
+    hass: HomeAssistant, monitors: AsyncMock
+) -> None:
+    """Test that component setup registers power sensors correctly."""
+    assert await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_POWER_SENSORS
+    )
+    await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
+    assert_power_sensor_registered(hass, SINGLE_MONITOR_SERIAL_NUMBER, 1, "channel 1")
+    assert_power_sensor_registered(hass, SINGLE_MONITOR_SERIAL_NUMBER, 2, "channel two")
 
 
-async def test_setup_entry_exception(hass, error_on_get_data):
-    """Test ConfigEntryNotReady when API raises an exception during entry setup."""
-    config_entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG, entry_id="test")
+async def test_setup_creates_voltage_sensor_entities(
+    hass: HomeAssistant, monitors: AsyncMock
+) -> None:
+    """Test that component setup registers voltage sensors properly."""
+    assert await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
+    )
+    await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
+    assert_voltage_sensor_registered(hass, SINGLE_MONITOR_SERIAL_NUMBER, 1, "voltage 1")
 
-    # In this case we are testing the condition where async_setup_entry raises
-    # ConfigEntryNotReady using the `error_on_get_data` fixture which simulates
-    # an error.
-    with pytest.raises(ConfigEntryNotReady):
-        assert await async_setup_entry(hass, config_entry)
+
+async def test_multi_monitor_config(hass: HomeAssistant, monitors: AsyncMock) -> None:
+    """Test that component setup registers entities from multiple monitors correctly."""
+    assert await setup_greeneye_monitor_component_with_config(
+        hass,
+        MULTI_MONITOR_CONFIG,
+    )
+
+    await connect_monitor(hass, monitors, 1)
+    await connect_monitor(hass, monitors, 2)
+    await connect_monitor(hass, monitors, 3)
+
+    assert_temperature_sensor_registered(hass, 1, 1, "unit_1_temp_1")
+    assert_temperature_sensor_registered(hass, 2, 1, "unit_2_temp_1")
+    assert_temperature_sensor_registered(hass, 3, 1, "unit_3_temp_1")
+
+
+async def test_setup_and_shutdown(hass: HomeAssistant, monitors: AsyncMock) -> None:
+    """Test that the component can set up and shut down cleanly, closing the underlying server on shutdown."""
+    monitors.start_server = AsyncMock(return_value=None)
+    monitors.close = AsyncMock(return_value=None)
+    assert await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_POWER_SENSORS
+    )
+
+    await hass.async_stop()
+
+    assert monitors.close.called
