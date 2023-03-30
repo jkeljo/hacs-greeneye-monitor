@@ -10,6 +10,7 @@ from homeassistant.components.sensor import SensorStateClass
 from homeassistant.const import CONF_NAME
 from homeassistant.const import CONF_SENSORS
 from homeassistant.const import CONF_TEMPERATURE_UNIT
+from homeassistant.const import UnitOfElectricCurrent
 from homeassistant.const import UnitOfElectricPotential
 from homeassistant.const import UnitOfEnergy
 from homeassistant.const import UnitOfPower
@@ -71,6 +72,13 @@ async def async_setup_platform(
                         sensor[CONF_NUMBER],
                         sensor[CONF_NAME],
                         sensor[CONF_NET_METERING],
+                    )
+                )
+                entities.append(
+                    CurrentSensor(
+                        monitor,
+                        sensor[CONF_NUMBER],
+                        sensor[CONF_NAME],
                     )
                 )
                 entities.append(
@@ -208,6 +216,30 @@ class PowerSensor(GEMSensor):
             watt_seconds = self._sensor.absolute_watt_seconds
 
         return {DATA_WATT_SECONDS: watt_seconds}
+
+
+class CurrentSensor(GEMSensor):
+    """Entity showing current on one channel of the monitor."""
+
+    _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+    _attr_device_class = SensorDeviceClass.CURRENT
+
+    def __init__(
+        self,
+        monitor: greeneye.monitor.Monitor,
+        number: int,
+        name: str,
+    ) -> None:
+        """Construct the entity."""
+        super().__init__(
+            monitor, name + "_amps", "amps", monitor.channels[number - 1], number
+        )
+        self._sensor: greeneye.monitor.Channel = self._sensor
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current number of watts being used by the channel."""
+        return self._sensor.amps
 
 
 class EnergySensor(GEMSensor):
