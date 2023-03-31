@@ -7,6 +7,9 @@ from unittest.mock import patch
 from custom_components.greeneye_monitor import CONF_MONITORS
 from custom_components.greeneye_monitor import CONFIG_SCHEMA
 from custom_components.greeneye_monitor import DOMAIN
+from custom_components.greeneye_monitor.config_flow import CONFIG_ENTRY_DATA_SCHEMA
+from custom_components.greeneye_monitor.config_flow import CONFIG_ENTRY_OPTIONS_SCHEMA
+from custom_components.greeneye_monitor.config_flow import yaml_to_config_entry
 from homeassistant.const import CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
@@ -42,15 +45,18 @@ async def test_setup_creates_config_entry(
         hass, SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
     )
 
-    normalized_schema = CONFIG_SCHEMA(SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS)
+    normalized_entry_schema = CONFIG_ENTRY_DATA_SCHEMA(
+        {CONF_PORT: 7513, CONF_MONITORS: {SINGLE_MONITOR_SERIAL_NUMBER: {}}}
+    )
+    normalized_options_schema = CONFIG_ENTRY_OPTIONS_SCHEMA(
+        {CONF_MONITORS: {SINGLE_MONITOR_SERIAL_NUMBER: {}}}
+    )
 
     entries = hass.config_entries.async_entries(DOMAIN)
     assert len(entries) == 1
     entry = entries[0]
-    assert entry.data == {
-        CONF_PORT: normalized_schema[DOMAIN][CONF_PORT],
-    }
-    assert entry.options == {CONF_MONITORS: normalized_schema[DOMAIN][CONF_MONITORS]}
+    assert entry.data == normalized_entry_schema
+    assert entry.options == normalized_options_schema
 
 
 async def test_setup_from_config_entry(
@@ -58,10 +64,11 @@ async def test_setup_from_config_entry(
 ) -> None:
     """Test that setting up from a config entry works."""
     normalized_schema = CONFIG_SCHEMA(SINGLE_MONITOR_CONFIG_PULSE_COUNTERS)
+    data, options = yaml_to_config_entry(normalized_schema[DOMAIN])
     config_entry = MockConfigEntry(
         domain=DOMAIN,
-        data={CONF_PORT: normalized_schema[DOMAIN][CONF_PORT]},
-        options={CONF_MONITORS: normalized_schema[DOMAIN][CONF_MONITORS]},
+        data=data,
+        options=options,
     )
 
     await hass.config_entries.async_add(config_entry)
@@ -72,7 +79,7 @@ async def test_setup_from_config_entry(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         3,
-        "pulse_3",
+        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-3",
         "gal",
         "h",
     )
@@ -83,11 +90,12 @@ async def test_setup_gets_updates_from_yaml(
 ) -> None:
     """Test that component setup updates the existing config entry when YAML changes."""
     normalized_schema = CONFIG_SCHEMA(SINGLE_MONITOR_CONFIG_TEMPERATURE_SENSORS)
+    data, options = yaml_to_config_entry(normalized_schema[DOMAIN])
     config_entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id=DOMAIN,
-        data={CONF_PORT: normalized_schema[DOMAIN][CONF_PORT]},
-        options={CONF_MONITORS: normalized_schema[DOMAIN][CONF_MONITORS]},
+        data=data,
+        options=options,
     )
 
     # Patch async_setup so that async_add just adds the config entry
@@ -105,7 +113,7 @@ async def test_setup_gets_updates_from_yaml(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         3,
-        "pulse_3",
+        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-3",
         "gal",
         "h",
     )

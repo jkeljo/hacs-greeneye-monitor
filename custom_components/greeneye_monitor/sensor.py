@@ -24,6 +24,7 @@ from .const import CONF_DEVICE_CLASS
 from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
 from .const import CONF_PULSE_COUNTERS
+from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
 from .const import DATA_GREENEYE_MONITOR
 
@@ -98,15 +99,17 @@ async def async_setup_entry(
                         )
                     )
 
-            temperature_unit = monitor_config[CONF_TEMPERATURE_UNIT]
+            temperature_config = monitor_config.get(CONF_TEMPERATURE_SENSORS, {})
+            temperature_unit = temperature_config.get(CONF_TEMPERATURE_UNIT)
             for temperature_sensor in monitor.temperature_sensors:
-                entities.append(
-                    TemperatureSensor(
-                        monitor,
-                        temperature_sensor,
-                        temperature_unit,
+                if temperature_unit:
+                    entities.append(
+                        TemperatureSensor(
+                            monitor,
+                            temperature_sensor,
+                            temperature_unit,
+                        )
                     )
-                )
 
             if monitor.voltage_sensor:
                 entities.append(VoltageSensor(monitor))
