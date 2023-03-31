@@ -50,28 +50,52 @@ async def test_setup_creates_temperature_entities(
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
     assert_temperature_sensor_registered(
-        hass, SINGLE_MONITOR_SERIAL_NUMBER, 1, "temp_a"
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        1,
+        f"greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_temp_1",
     )
     assert_temperature_sensor_registered(
-        hass, SINGLE_MONITOR_SERIAL_NUMBER, 2, "temp_2"
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        2,
+        f"greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_temp_2",
     )
     assert_temperature_sensor_registered(
-        hass, SINGLE_MONITOR_SERIAL_NUMBER, 3, "temp_c"
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        3,
+        f"greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_temp_3",
     )
     assert_temperature_sensor_registered(
-        hass, SINGLE_MONITOR_SERIAL_NUMBER, 4, "temp_d"
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        4,
+        f"greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_temp_4",
     )
     assert_temperature_sensor_registered(
-        hass, SINGLE_MONITOR_SERIAL_NUMBER, 5, "temp_5"
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        5,
+        f"greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_temp_5",
     )
     assert_temperature_sensor_registered(
-        hass, SINGLE_MONITOR_SERIAL_NUMBER, 6, "temp_f"
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        6,
+        f"greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_temp_6",
     )
     assert_temperature_sensor_registered(
-        hass, SINGLE_MONITOR_SERIAL_NUMBER, 7, "temp_g"
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        7,
+        f"greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_temp_7",
     )
     assert_temperature_sensor_registered(
-        hass, SINGLE_MONITOR_SERIAL_NUMBER, 8, "temp_h"
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        8,
+        f"greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_temp_8",
     )
 
 

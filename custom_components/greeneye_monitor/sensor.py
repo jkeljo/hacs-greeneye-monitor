@@ -7,8 +7,7 @@ import greeneye
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorStateClass
-from homeassistant.const import CONF_NAME
-from homeassistant.const import CONF_SENSORS
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_TEMPERATURE_UNIT
 from homeassistant.const import UnitOfElectricCurrent
 from homeassistant.const import UnitOfElectricPotential
@@ -17,8 +16,6 @@ from homeassistant.const import UnitOfPower
 from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType
-from homeassistant.helpers.typing import DiscoveryInfoType
 
 from .const import CONF_CHANNELS
 from .const import CONF_COUNTED_QUANTITY
@@ -26,12 +23,8 @@ from .const import CONF_COUNTED_QUANTITY_PER_PULSE
 from .const import CONF_DEVICE_CLASS
 from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
-from .const import CONF_NUMBER
 from .const import CONF_PULSE_COUNTERS
-from .const import CONF_SERIAL_NUMBER
-from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
-from .const import CONF_VOLTAGE_SENSORS
 from .const import DATA_GREENEYE_MONITOR
 
 DATA_PULSES = "pulses"
@@ -40,34 +33,22 @@ DATA_WATT_SECONDS = "watt_seconds"
 COUNTER_ICON = "mdi:counter"
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
+    config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up a single GEM temperature sensor."""
-    if not discovery_info:
-        return
-
-    monitor_configs = discovery_info[CONF_MONITORS]
+) -> bool:
+    """Set up GEM sensors from the config entry"""
+    monitor_configs = config_entry.data[CONF_MONITORS]
+    monitor_options = config_entry.options[CONF_MONITORS]
 
     def on_new_monitor(monitor: greeneye.monitor.Monitor) -> None:
-        monitor_config = next(
-            filter(
-                lambda monitor_config: monitor_config[CONF_SERIAL_NUMBER]
-                == monitor.serial_number,
-                monitor_configs,
-            ),
-            None,
-        )
-        if monitor_config:
+        monitor_config = monitor_configs.get(monitor.serial_number)
+        monitor_option = monitor_options.get(monitor.serial_number)
+        if monitor_config is not None and monitor_option is not None:
             entities: list[GEMSensor] = []
 
-            channel_configs = {
-                channel[CONF_NUMBER]: channel
-                for channel in monitor_config[CONF_CHANNELS]
-            }
+            channel_configs = monitor_config[CONF_CHANNELS]
             for channel in monitor.channels:
                 config = channel_configs.get(channel.number)
                 if config:
@@ -75,7 +56,6 @@ async def async_setup_platform(
                         PowerSensor(
                             monitor,
                             channel,
-                            config[CONF_NAME],
                             config[CONF_NET_METERING],
                         )
                     )
@@ -83,32 +63,28 @@ async def async_setup_platform(
                         CurrentSensor(
                             monitor,
                             channel,
-                            config[CONF_NAME],
                         )
                     )
                     entities.append(
                         EnergySensor(
                             monitor,
                             channel,
-                            config[CONF_NAME],
                             config[CONF_NET_METERING],
                         )
                     )
 
-            pulse_counter_configs = {
-                pulse_counter[CONF_NUMBER]: pulse_counter
-                for pulse_counter in monitor_config[CONF_PULSE_COUNTERS]
-            }
+            pulse_counter_configs = monitor_config[CONF_PULSE_COUNTERS]
+            pulse_counter_options = monitor_options[CONF_PULSE_COUNTERS]
             for pulse_counter in monitor.pulse_counters:
                 config = pulse_counter_configs.get(pulse_counter.number)
-                if config:
+                options = pulse_counter_options.get(pulse_counter.number)
+                if config and options:
                     entities.append(
                         PulseRateSensor(
                             monitor,
                             pulse_counter,
-                            config[CONF_NAME],
                             config[CONF_COUNTED_QUANTITY],
-                            config[CONF_TIME_UNIT],
+                            options[CONF_TIME_UNIT],
                             config[CONF_COUNTED_QUANTITY_PER_PULSE],
                         )
                     )
@@ -116,44 +92,27 @@ async def async_setup_platform(
                         PulseCountSensor(
                             monitor,
                             pulse_counter,
-                            config[CONF_NAME],
                             config[CONF_DEVICE_CLASS],
                             config[CONF_COUNTED_QUANTITY],
                             config[CONF_COUNTED_QUANTITY_PER_PULSE],
                         )
                     )
 
-            temperature_unit = monitor_config[CONF_TEMPERATURE_SENSORS][
-                CONF_TEMPERATURE_UNIT
-            ]
-            temperature_sensor_configs = {
-                temperature_sensor[CONF_NUMBER]: temperature_sensor
-                for temperature_sensor in monitor_config[CONF_TEMPERATURE_SENSORS][
-                    CONF_SENSORS
-                ]
-            }
+            temperature_unit = monitor_config[CONF_TEMPERATURE_UNIT]
             for temperature_sensor in monitor.temperature_sensors:
-                config = temperature_sensor_configs.get(temperature_sensor.number)
-                if config:
-                    entities.append(
-                        TemperatureSensor(
-                            monitor,
-                            temperature_sensor,
-                            config[CONF_NAME],
-                            temperature_unit,
-                        )
-                    )
-
-            voltage_sensor_config = next(
-                iter(monitor_config[CONF_VOLTAGE_SENSORS]), None
-            )
-            if voltage_sensor_config and monitor.voltage_sensor:
                 entities.append(
-                    VoltageSensor(monitor, voltage_sensor_config[CONF_NAME])
+                    TemperatureSensor(
+                        monitor,
+                        temperature_sensor,
+                        temperature_unit,
+                    )
                 )
 
+            if monitor.voltage_sensor:
+                entities.append(VoltageSensor(monitor))
+
             async_add_entities(entities)
-            monitor_configs.remove(monitor_config)
+            del monitor_configs[monitor.serial_number]
 
         if len(monitor_configs) == 0:
             monitors.remove_listener(on_new_monitor)
@@ -162,6 +121,8 @@ async def async_setup_platform(
     monitors.add_listener(on_new_monitor)
     for monitor in monitors.monitors.values():
         on_new_monitor(monitor)
+
+    return True
 
 
 UnderlyingSensorType = (
@@ -180,7 +141,6 @@ class GEMSensor(SensorEntity):
     def __init__(
         self,
         monitor: greeneye.monitor.Monitor,
-        name: str,
         sensor_type: str,
         sensor: UnderlyingSensorType,
         number: int,
@@ -188,13 +148,13 @@ class GEMSensor(SensorEntity):
         """Construct the entity."""
         self._monitor = monitor
         self._monitor_serial_number = self._monitor.serial_number
-        self._attr_name = name
         self._sensor_type = sensor_type
         self._sensor: UnderlyingSensorType = sensor
         self._number = number
         self._attr_unique_id = (
             f"{self._monitor_serial_number}-{self._sensor_type}-{self._number}"
         )
+        self._name = f"greeneye_{self._attr_unique_id}"
 
     async def async_added_to_hass(self) -> None:
         """Wait for and connect to the sensor."""
@@ -216,11 +176,10 @@ class PowerSensor(GEMSensor):
         self,
         monitor: greeneye.monitor.Monitor,
         sensor: greeneye.monitor.Channel,
-        name: str,
         net_metering: bool,
     ) -> None:
         """Construct the entity."""
-        super().__init__(monitor, name, "current", sensor, sensor.number)
+        super().__init__(monitor, "current", sensor, sensor.number)
         self._sensor: greeneye.monitor.Channel = self._sensor
         self._net_metering = net_metering
 
@@ -250,10 +209,9 @@ class CurrentSensor(GEMSensor):
         self,
         monitor: greeneye.monitor.Monitor,
         sensor: greeneye.monitor.Channel,
-        name: str,
     ) -> None:
         """Construct the entity."""
-        super().__init__(monitor, name + "_amps", "amps", sensor, sensor.number)
+        super().__init__(monitor, "amps", sensor, sensor.number)
         self._sensor: greeneye.monitor.Channel = self._sensor
 
     @property
@@ -273,11 +231,10 @@ class EnergySensor(GEMSensor):
         self,
         monitor: greeneye.monitor.Monitor,
         sensor: greeneye.monitor.Channel,
-        name: str,
         net_metering: bool,
     ) -> None:
         """Construct the entity."""
-        super().__init__(monitor, name + "_energy", "energy", sensor, sensor.number)
+        super().__init__(monitor, "energy", sensor, sensor.number)
         self._sensor: greeneye.monitor.Channel = self._sensor
         self._net_metering = net_metering
 
@@ -299,13 +256,12 @@ class PulseRateSensor(GEMSensor):
         self,
         monitor: greeneye.monitor.Monitor,
         sensor: greeneye.monitor.PulseCounter,
-        name: str,
         counted_quantity: str,
         time_unit: str,
         counted_quantity_per_pulse: float,
     ) -> None:
         """Construct the entity."""
-        super().__init__(monitor, name, "pulse", sensor, sensor.number)
+        super().__init__(monitor, "pulse", sensor, sensor.number)
         self._sensor: greeneye.monitor.PulseCounter = self._sensor
         self._counted_quantity_per_pulse = counted_quantity_per_pulse
         self._time_unit = time_unit
@@ -355,7 +311,6 @@ class PulseCountSensor(GEMSensor):
         self,
         monitor: greeneye.monitor.Monitor,
         sensor: greeneye.monitor.PulseCounter,
-        name: str,
         device_class: SensorDeviceClass | None,
         counted_quantity: str,
         counted_quantity_per_pulse: float,
@@ -363,7 +318,6 @@ class PulseCountSensor(GEMSensor):
         """Construct the entity."""
         super().__init__(
             monitor,
-            name + "_count",
             "count",
             sensor,
             sensor.number,
@@ -390,11 +344,10 @@ class TemperatureSensor(GEMSensor):
         self,
         monitor: greeneye.monitor.Monitor,
         sensor: greeneye.monitor.TemperatureSensor,
-        name: str,
         unit: str,
     ) -> None:
         """Construct the entity."""
-        super().__init__(monitor, name, "temp", sensor, sensor.number)
+        super().__init__(monitor, "temp", sensor, sensor.number)
         self._sensor: greeneye.monitor.TemperatureSensor = self._sensor
         self._attr_native_unit_of_measurement = unit
 
@@ -410,9 +363,9 @@ class VoltageSensor(GEMSensor):
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
     _attr_device_class = SensorDeviceClass.VOLTAGE
 
-    def __init__(self, monitor: greeneye.monitor.Monitor, name: str) -> None:
+    def __init__(self, monitor: greeneye.monitor.Monitor) -> None:
         """Construct the entity."""
-        super().__init__(monitor, name, "volts", monitor.voltage_sensor, 1)
+        super().__init__(monitor, "volts", monitor.voltage_sensor, 1)
         self._sensor: greeneye.monitor.VoltageSensor = self._sensor
 
     @property

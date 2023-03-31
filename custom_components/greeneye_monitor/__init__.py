@@ -6,6 +6,8 @@ import logging
 import greeneye
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import CONF_NAME
 from homeassistant.const import CONF_PORT
 from homeassistant.const import CONF_SENSORS
@@ -15,7 +17,6 @@ from homeassistant.const import Platform
 from homeassistant.const import UnitOfTime
 from homeassistant.core import Event
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.typing import ConfigType
 
 from . import config_validation as gem_cv
@@ -110,12 +111,23 @@ CONFIG_SCHEMA = vol.Schema({DOMAIN: COMPONENT_SCHEMA}, extra=vol.ALLOW_EXTRA)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the GreenEye Monitor component."""
+    """Copy the YAML configuration to the config entry."""
+    if server_config := config.get(DOMAIN):
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN, context={"source": SOURCE_IMPORT}, data=server_config
+            )
+        )
+
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Setup the GreenEye Monitor component from a config entry."""
     monitors = greeneye.Monitors()
     hass.data[DATA_GREENEYE_MONITOR] = monitors
 
-    server_config = config[DOMAIN]
-    await monitors.start_server(server_config[CONF_PORT])
+    await monitors.start_server(config_entry.data[CONF_PORT])
 
     async def close_monitors(event: Event) -> None:
         """Close the Monitors object."""
@@ -123,22 +135,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, close_monitors)
 
-    num_sensors = 0
-    for monitor_config in config[DOMAIN][CONF_MONITORS]:
-        num_sensors += len(monitor_config[CONF_CHANNELS])
-        num_sensors += len(monitor_config[CONF_PULSE_COUNTERS])
-        num_sensors += len(monitor_config[CONF_TEMPERATURE_SENSORS][CONF_SENSORS])
-        num_sensors += len(monitor_config[CONF_VOLTAGE_SENSORS])
-
-    if num_sensors == 0:
-        _LOGGER.error(
-            "Configuration must specify at least one "
-            "channel, voltage, pulse counter or temperature sensor"
-        )
-        return False
-
     hass.async_create_task(
-        async_load_platform(hass, Platform.SENSOR, DOMAIN, config[DOMAIN], config)
+        hass.config_entries.async_forward_entry_setups(config_entry, [Platform.SENSOR])
     )
 
     return True
