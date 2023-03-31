@@ -237,9 +237,9 @@ def mock_monitor(serial_number: int) -> MagicMock:
     monitor = mock_with_listeners()
     monitor.serial_number = serial_number
     monitor.voltage_sensor = mock_voltage_sensor()
-    monitor.pulse_counters = [mock_pulse_counter(i) for i in range(1, 5)]
-    monitor.temperature_sensors = [mock_temperature_sensor(i) for i in range(1, 9)]
-    monitor.channels = [mock_channel(i) for i in range(1, 33)]
+    monitor.pulse_counters = [mock_pulse_counter(i) for i in range(0, 4)]
+    monitor.temperature_sensors = [mock_temperature_sensor(i) for i in range(0, 8)]
+    monitor.channels = [mock_channel(i) for i in range(0, 32)]
     return monitor
 
 

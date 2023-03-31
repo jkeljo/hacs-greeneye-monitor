@@ -155,7 +155,7 @@ class GEMSensor(SensorEntity):
         self._sensor: UnderlyingSensorType = sensor
         self._number = number
         self._attr_unique_id = (
-            f"{self._monitor_serial_number}-{self._sensor_type}-{self._number}"
+            f"{self._monitor_serial_number}-{self._sensor_type}-{self._number + 1}"
         )
         self._attr_name = f"greeneye-{self._attr_unique_id}"
 
@@ -368,7 +368,7 @@ class VoltageSensor(GEMSensor):
 
     def __init__(self, monitor: greeneye.monitor.Monitor) -> None:
         """Construct the entity."""
-        super().__init__(monitor, "volts", monitor.voltage_sensor, 1)
+        super().__init__(monitor, "volts", monitor.voltage_sensor, 0)
         self._sensor: greeneye.monitor.VoltageSensor = self._sensor
 
     @property

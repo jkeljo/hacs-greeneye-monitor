@@ -145,13 +145,13 @@ def yaml_to_config_entry(
                     ],
                 },
                 CONF_CHANNELS: {
-                    channel[CONF_NUMBER]: {
-                        CONF_NET_METERING: channel[CONF_NET_METERING]
-                    }
+                    channel[CONF_NUMBER]
+                    - 1: {CONF_NET_METERING: channel[CONF_NET_METERING]}
                     for channel in monitor[CONF_CHANNELS]
                 },
                 CONF_PULSE_COUNTERS: {
-                    pulse_counter[CONF_NUMBER]: {
+                    pulse_counter[CONF_NUMBER]
+                    - 1: {
                         CONF_DEVICE_CLASS: pulse_counter[CONF_DEVICE_CLASS],
                         CONF_COUNTED_QUANTITY: pulse_counter[CONF_COUNTED_QUANTITY],
                         CONF_COUNTED_QUANTITY_PER_PULSE: pulse_counter[
@@ -168,7 +168,8 @@ def yaml_to_config_entry(
         CONF_MONITORS: {
             monitor[CONF_SERIAL_NUMBER]: {
                 CONF_PULSE_COUNTERS: {
-                    pulse_counter[CONF_NUMBER]: {
+                    pulse_counter[CONF_NUMBER]
+                    - 1: {
                         CONF_TIME_UNIT: pulse_counter[CONF_TIME_UNIT],
                     }
                     for pulse_counter in monitor[CONF_PULSE_COUNTERS]
