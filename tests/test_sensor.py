@@ -29,7 +29,12 @@ async def test_sensor_does_not_exist_before_monitor_connected(
     )
 
     entity_registry = get_entity_registry(hass)
-    assert entity_registry.async_get("sensor.voltage_1") is None
+    assert (
+        entity_registry.async_get(
+            f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_volts_1"
+        )
+        is None
+    )
 
 
 async def test_sensors_created_when_monitor_connected(
@@ -44,7 +49,9 @@ async def test_sensors_created_when_monitor_connected(
     assert len(monitors.listeners) == 1
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
     assert len(monitors.listeners) == 0  # Make sure we cleaned up the listener
-    assert_sensor_state(hass, "sensor.voltage_1", "120.0")
+    assert_sensor_state(
+        hass, f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_volts_1", "120.0"
+    )
 
 
 async def test_sensors_created_during_setup_if_monitor_already_connected(
@@ -58,7 +65,9 @@ async def test_sensors_created_during_setup_if_monitor_already_connected(
     )
 
     assert len(monitors.listeners) == 0  # Make sure we cleaned up the listener
-    assert_sensor_state(hass, "sensor.voltage_1", "120.0")
+    assert_sensor_state(
+        hass, f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_volts_1", "120.0"
+    )
 
 
 async def test_disable_sensor_after_monitor_connected(
@@ -72,7 +81,9 @@ async def test_disable_sensor_after_monitor_connected(
     monitor = await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
 
     assert len(monitor.voltage_sensor.listeners) == 1
-    await disable_entity(hass, "sensor.voltage_1")
+    await disable_entity(
+        hass, f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_volts_1"
+    )
     assert len(monitor.voltage_sensor.listeners) == 0
 
 
@@ -85,11 +96,15 @@ async def test_updates_state_when_sensor_pushes(
         hass, SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
     )
     monitor = await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
-    assert_sensor_state(hass, "sensor.voltage_1", "120.0")
+    assert_sensor_state(
+        hass, f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_volts_1", "120.0"
+    )
 
     monitor.voltage_sensor.voltage = 119.8
     monitor.voltage_sensor.notify_all_listeners()
-    assert_sensor_state(hass, "sensor.voltage_1", "119.8")
+    assert_sensor_state(
+        hass, f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_volts_1", "119.8"
+    )
 
 
 async def test_power_sensor_initially_unknown(
@@ -101,13 +116,16 @@ async def test_power_sensor_initially_unknown(
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
     assert_sensor_state(
-        hass, "sensor.channel_1", STATE_UNKNOWN, {DATA_WATT_SECONDS: 1000}
+        hass,
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_current_1",
+        STATE_UNKNOWN,
+        {DATA_WATT_SECONDS: 1000},
     )
     # This sensor was configured with net metering on, so we should be taking the
     # polarized value
     assert_sensor_state(
         hass,
-        "sensor.channel_two",
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_current_2",
         STATE_UNKNOWN,
         {DATA_WATT_SECONDS: -400},
     )
@@ -123,10 +141,20 @@ async def test_power_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
     monitor.channels[1].watts = 120.0
     monitor.channels[0].notify_all_listeners()
     monitor.channels[1].notify_all_listeners()
-    assert_sensor_state(hass, "sensor.channel_1", "120.0", {DATA_WATT_SECONDS: 1000})
+    assert_sensor_state(
+        hass,
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_current_1",
+        "120.0",
+        {DATA_WATT_SECONDS: 1000},
+    )
     # This sensor was configured with net metering on, so we should be taking the
     # polarized value
-    assert_sensor_state(hass, "sensor.channel_two", "120.0", {DATA_WATT_SECONDS: -400})
+    assert_sensor_state(
+        hass,
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_current_2",
+        "120.0",
+        {DATA_WATT_SECONDS: -400},
+    )
 
 
 async def test_energy_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
@@ -139,10 +167,14 @@ async def test_energy_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
     monitor.channels[1].watts = 120.0
     monitor.channels[0].notify_all_listeners()
     monitor.channels[1].notify_all_listeners()
-    assert_sensor_state(hass, "sensor.channel_1_energy", "42")
+    assert_sensor_state(
+        hass, f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_energy_1", "42"
+    )
     # This sensor was configured with net metering on, so we should be taking the
     # polarized value
-    assert_sensor_state(hass, "sensor.channel_two_energy", "-50")
+    assert_sensor_state(
+        hass, f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_energy_2", "-50"
+    )
 
 
 async def test_pulse_counter_initially_unknown(
@@ -159,13 +191,28 @@ async def test_pulse_counter_initially_unknown(
     monitor.pulse_counters[0].notify_all_listeners()
     monitor.pulse_counters[1].notify_all_listeners()
     monitor.pulse_counters[2].notify_all_listeners()
-    assert_sensor_state(hass, "sensor.pulse_a", STATE_UNKNOWN, {DATA_PULSES: 1000})
+    assert_sensor_state(
+        hass,
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_pulse_1",
+        STATE_UNKNOWN,
+        {DATA_PULSES: 1000},
+    )
     # This counter was configured with each pulse meaning 0.5 gallons and
     # wanting to show gallons per minute, so 10 pulses per second -> 300 gal/min
-    assert_sensor_state(hass, "sensor.pulse_2", STATE_UNKNOWN, {DATA_PULSES: 1000})
+    assert_sensor_state(
+        hass,
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_pulse_2",
+        STATE_UNKNOWN,
+        {DATA_PULSES: 1000},
+    )
     # This counter was configured with each pulse meaning 0.5 gallons and
     # wanting to show gallons per hour, so 10 pulses per second -> 18000 gal/hr
-    assert_sensor_state(hass, "sensor.pulse_3", STATE_UNKNOWN, {DATA_PULSES: 1000})
+    assert_sensor_state(
+        hass,
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_pulse_3",
+        STATE_UNKNOWN,
+        {DATA_PULSES: 1000},
+    )
 
 
 async def test_pulse_counter(hass: HomeAssistant, monitors: AsyncMock) -> None:
@@ -174,13 +221,28 @@ async def test_pulse_counter(hass: HomeAssistant, monitors: AsyncMock) -> None:
         hass, SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
-    assert_sensor_state(hass, "sensor.pulse_a", "10.0", {DATA_PULSES: 1000})
+    assert_sensor_state(
+        hass,
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_pulse_1",
+        "10.0",
+        {DATA_PULSES: 1000},
+    )
     # This counter was configured with each pulse meaning 0.5 gallons and
     # wanting to show gallons per minute, so 10 pulses per second -> 300 gal/min
-    assert_sensor_state(hass, "sensor.pulse_2", "300.0", {DATA_PULSES: 1000})
+    assert_sensor_state(
+        hass,
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_pulse_2",
+        "300.0",
+        {DATA_PULSES: 1000},
+    )
     # This counter was configured with each pulse meaning 0.5 gallons and
     # wanting to show gallons per hour, so 10 pulses per second -> 18000 gal/hr
-    assert_sensor_state(hass, "sensor.pulse_3", "18000.0", {DATA_PULSES: 1000})
+    assert_sensor_state(
+        hass,
+        f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_pulse_3",
+        "18000.0",
+        {DATA_PULSES: 1000},
+    )
 
 
 async def test_temperature_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
@@ -191,7 +253,9 @@ async def test_temperature_sensor(hass: HomeAssistant, monitors: AsyncMock) -> N
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
     # The config says that the sensor is reporting in Fahrenheit; if we set that up
     # properly, HA will have converted that to Celsius by default.
-    assert_sensor_state(hass, "sensor.temp_a", "0.0")
+    assert_sensor_state(
+        hass, f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_temp_1", "0.0"
+    )
 
 
 async def test_voltage_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
@@ -200,7 +264,9 @@ async def test_voltage_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
         hass, SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
-    assert_sensor_state(hass, "sensor.voltage_1", "120.0")
+    assert_sensor_state(
+        hass, f"sensor.greeneye_{SINGLE_MONITOR_SERIAL_NUMBER}_volts_1", "120.0"
+    )
 
 
 async def test_multi_monitor_sensors(hass: HomeAssistant, monitors: AsyncMock) -> None:
@@ -209,9 +275,9 @@ async def test_multi_monitor_sensors(hass: HomeAssistant, monitors: AsyncMock) -
     await connect_monitor(hass, monitors, 1)
     await connect_monitor(hass, monitors, 2)
     await connect_monitor(hass, monitors, 3)
-    assert_sensor_state(hass, "sensor.unit_1_temp_1", "32.0")
-    assert_sensor_state(hass, "sensor.unit_2_temp_1", "0.0")
-    assert_sensor_state(hass, "sensor.unit_3_temp_1", "32.0")
+    assert_sensor_state(hass, "sensor.greeneye_1_temp_1", "32.0")
+    assert_sensor_state(hass, "sensor.greeneye_2_temp_1", "0.0")
+    assert_sensor_state(hass, "sensor.greeneye_3_temp_1", "32.0")
 
 
 async def disable_entity(hass: HomeAssistant, entity_id: str) -> None:

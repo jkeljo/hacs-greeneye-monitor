@@ -114,15 +114,16 @@ class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         }
         options = {
             CONF_MONITORS: {
-                monitor[CONF_SERIAL_NUMBER]: {},
-                CONF_PULSE_COUNTERS: {
-                    pulse_counter[CONF_NUMBER]: {
-                        CONF_TIME_UNIT: pulse_counter[CONF_TIME_UNIT],
-                    }
-                    for pulse_counter in monitor[CONF_PULSE_COUNTERS]
-                },
+                monitor[CONF_SERIAL_NUMBER]: {
+                    CONF_PULSE_COUNTERS: {
+                        pulse_counter[CONF_NUMBER]: {
+                            CONF_TIME_UNIT: pulse_counter[CONF_TIME_UNIT],
+                        }
+                        for pulse_counter in monitor[CONF_PULSE_COUNTERS]
+                    },
+                }
+                for monitor in discovery_info[CONF_MONITORS]
             }
-            for monitor in discovery_info[CONF_MONITORS]
         }
 
         if entry := await self.async_set_unique_id(DOMAIN):

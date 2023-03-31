@@ -74,7 +74,7 @@ async def async_setup_entry(
                     )
 
             pulse_counter_configs = monitor_config[CONF_PULSE_COUNTERS]
-            pulse_counter_options = monitor_options[CONF_PULSE_COUNTERS]
+            pulse_counter_options = monitor_option[CONF_PULSE_COUNTERS]
             for pulse_counter in monitor.pulse_counters:
                 config = pulse_counter_configs.get(pulse_counter.number)
                 options = pulse_counter_options.get(pulse_counter.number)
@@ -154,7 +154,7 @@ class GEMSensor(SensorEntity):
         self._attr_unique_id = (
             f"{self._monitor_serial_number}-{self._sensor_type}-{self._number}"
         )
-        self._name = f"greeneye_{self._attr_unique_id}"
+        self._attr_name = f"greeneye-{self._attr_unique_id}"
 
     async def async_added_to_hass(self) -> None:
         """Wait for and connect to the sensor."""
