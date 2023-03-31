@@ -12,6 +12,7 @@ from homeassistant.const import UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as get_entity_registry
 from homeassistant.helpers.entity_registry import RegistryEntry
+from homeassistant.util import slugify
 
 from .common import add_listeners
 
@@ -100,7 +101,7 @@ def assert_sensor_registered(
     sensor = registry.async_get(entity_id)
     assert sensor
     assert sensor.unique_id == unique_id
-    assert sensor.original_name == name
+    assert sensor.entity_id == f"sensor.{slugify(name)}"
 
     return sensor
 

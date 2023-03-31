@@ -12,7 +12,9 @@ from custom_components.greeneye_monitor.config_flow import CONFIG_ENTRY_OPTIONS_
 from custom_components.greeneye_monitor.config_flow import yaml_to_config_entry
 from homeassistant.const import CONF_PORT
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
+from pytest_homeassistant_custom_component.common import mock_registry
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .common import connect_monitor
@@ -114,6 +116,39 @@ async def test_setup_gets_updates_from_yaml(
         SINGLE_MONITOR_SERIAL_NUMBER,
         3,
         f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-3",
+        "gal",
+        "h",
+    )
+
+
+async def test_previous_names_remain(hass: HomeAssistant, monitors: AsyncMock) -> None:
+    data, options = yaml_to_config_entry(
+        CONFIG_SCHEMA(SINGLE_MONITOR_CONFIG_PULSE_COUNTERS)[DOMAIN]
+    )
+    config_entry = MockConfigEntry(
+        domain=DOMAIN, unique_id=DOMAIN, data=data, options=options
+    )
+
+    mock_registry(
+        hass,
+        {
+            "sensor.pulse_3": er.RegistryEntry(
+                entity_id="sensor.pulse_3",
+                unique_id=f"{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-3",
+                platform=DOMAIN,
+            )
+        },
+    )
+
+    await hass.config_entries.async_add(config_entry)
+    await hass.async_block_till_done()
+    await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
+
+    assert_pulse_counter_registered(
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        3,
+        "pulse_3",
         "gal",
         "h",
     )
