@@ -219,6 +219,7 @@ class PowerSensor(GEMSensor):
 
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
         self,
@@ -255,6 +256,7 @@ class CurrentSensor(GEMSensor):
     _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
     _attr_device_class = SensorDeviceClass.CURRENT
     _attr_name = "current"
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
         self,
@@ -314,6 +316,7 @@ class PulseRateSensor(GEMSensor):
 
     _attr_icon = COUNTER_ICON
     _attr_name = "rate"
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
         self,
@@ -407,6 +410,7 @@ class TemperatureSensor(GEMSensor):
     """Entity showing temperature from one temperature sensor."""
 
     _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
         self,
@@ -432,6 +436,7 @@ class VoltageSensor(GEMSensor):
 
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
     _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, monitor: greeneye.monitor.Monitor) -> None:
         """Construct the entity."""
