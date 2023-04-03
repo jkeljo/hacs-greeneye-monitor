@@ -7,7 +7,9 @@ from unittest.mock import patch
 import pytest
 from custom_components.greeneye_monitor import DOMAIN
 from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.const import UnitOfElectricCurrent
 from homeassistant.const import UnitOfElectricPotential
+from homeassistant.const import UnitOfEnergy
 from homeassistant.const import UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
@@ -80,6 +82,28 @@ def assert_power_sensor_registered(
     )
     assert sensor.unit_of_measurement == UnitOfPower.WATT
     assert sensor.original_device_class is SensorDeviceClass.POWER
+
+
+def assert_energy_sensor_registered(
+    hass: HomeAssistant, serial_number: int, number: int, name: str
+) -> None:
+    """Assert that a power sensor entity was registered properly."""
+    sensor = assert_sensor_registered(
+        hass, serial_number, "channel", "energy", number, name
+    )
+    assert sensor.unit_of_measurement == UnitOfEnergy.KILO_WATT_HOUR
+    assert sensor.original_device_class is SensorDeviceClass.ENERGY
+
+
+def assert_current_sensor_registered(
+    hass: HomeAssistant, serial_number: int, number: int, name: str
+) -> None:
+    """Assert that a power sensor entity was registered properly."""
+    sensor = assert_sensor_registered(
+        hass, serial_number, "channel", "amps", number, name
+    )
+    assert sensor.unit_of_measurement == UnitOfElectricCurrent.AMPERE
+    assert sensor.original_device_class is SensorDeviceClass.CURRENT
 
 
 def assert_voltage_sensor_registered(

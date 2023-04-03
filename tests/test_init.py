@@ -25,6 +25,8 @@ from .common import SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
 from .common import SINGLE_MONITOR_CONFIG_TEMPERATURE_SENSORS
 from .common import SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
 from .common import SINGLE_MONITOR_SERIAL_NUMBER
+from .conftest import assert_current_sensor_registered
+from .conftest import assert_energy_sensor_registered
 from .conftest import assert_power_sensor_registered
 from .conftest import assert_pulse_counter_registered
 from .conftest import assert_temperature_sensor_registered
@@ -273,6 +275,50 @@ async def test_setup_creates_power_sensor_entities(
         SINGLE_MONITOR_SERIAL_NUMBER,
         2,
         f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} channel 2",
+    )
+
+
+async def test_setup_creates_energy_sensor_entities(
+    hass: HomeAssistant, monitors: AsyncMock
+) -> None:
+    """Test that component setup registers power sensors correctly."""
+    assert await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_POWER_SENSORS
+    )
+    await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
+    assert_energy_sensor_registered(
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        1,
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} channel 1 energy",
+    )
+    assert_energy_sensor_registered(
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        2,
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} channel 2 energy",
+    )
+
+
+async def test_setup_creates_current_sensor_entities(
+    hass: HomeAssistant, monitors: AsyncMock
+) -> None:
+    """Test that component setup registers power sensors correctly."""
+    assert await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_POWER_SENSORS
+    )
+    await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
+    assert_current_sensor_registered(
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        1,
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} channel 1 current",
+    )
+    assert_current_sensor_registered(
+        hass,
+        SINGLE_MONITOR_SERIAL_NUMBER,
+        2,
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} channel 2 current",
     )
 
 
