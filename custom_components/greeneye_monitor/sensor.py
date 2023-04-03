@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 from typing import Any
 from typing import cast
 
@@ -20,6 +21,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import Throttle
 
 from .const import CONF_CHANNELS
 from .const import CONF_COUNTED_QUANTITY
@@ -31,6 +33,7 @@ from .const import CONF_PULSE_COUNTERS
 from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
 from .const import DATA_GREENEYE_MONITOR
+from .const import DEFAULT_UPDATE_INTERVAL
 from .const import DEVICE_TYPE_CURRENT_TRANSFORMER
 from .const import DEVICE_TYPE_PULSE_COUNTER
 from .const import DEVICE_TYPE_TEMPERATURE_SENSOR
@@ -157,6 +160,7 @@ UnderlyingSensorType = (
 class GEMSensor(SensorEntity):
     """Base class for GreenEye Monitor sensors."""
 
+    _attr_entity_registry_enabled_default = False
     _attr_has_entity_name = True
     _attr_should_poll = False
 
@@ -167,6 +171,7 @@ class GEMSensor(SensorEntity):
         sensor_type: str,
         sensor: UnderlyingSensorType,
         number: int,
+        update_interval: timedelta | None = None,
     ) -> None:
         """Construct the entity."""
         self._monitor = monitor
@@ -178,6 +183,10 @@ class GEMSensor(SensorEntity):
         self._attr_unique_id = (
             f"{self._monitor_serial_number}-{self._sensor_type}-{self._number + 1}"
         )
+        if update_interval:
+            self._update = Throttle(update_interval)(self.async_write_ha_state)
+        else:
+            self._update = self.async_write_ha_state
 
     @property
     def device_info(self) -> DeviceInfo | None:
@@ -197,12 +206,12 @@ class GEMSensor(SensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Wait for and connect to the sensor."""
-        self._sensor.add_listener(self.async_write_ha_state)
+        self._sensor.add_listener(self._update)
 
     async def async_will_remove_from_hass(self) -> None:
         """Remove listener from the sensor."""
         if self._sensor:
-            self._sensor.remove_listener(self.async_write_ha_state)
+            self._sensor.remove_listener(self._update)
 
 
 class PowerSensor(GEMSensor):
@@ -271,6 +280,7 @@ class EnergySensor(GEMSensor):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_name = "energy"
     _attr_state_class = SensorStateClass.TOTAL
+    _attr_entity_registry_enabled_default = True
 
     def __init__(
         self,
@@ -280,7 +290,12 @@ class EnergySensor(GEMSensor):
     ) -> None:
         """Construct the entity."""
         super().__init__(
-            monitor, DEVICE_TYPE_CURRENT_TRANSFORMER, "energy", sensor, sensor.number
+            monitor,
+            DEVICE_TYPE_CURRENT_TRANSFORMER,
+            "energy",
+            sensor,
+            sensor.number,
+            update_interval=DEFAULT_UPDATE_INTERVAL,
         )
         self._sensor: greeneye.monitor.Channel = self._sensor
         self._net_metering = net_metering
@@ -355,6 +370,7 @@ class PulseRateSensor(GEMSensor):
 class PulseCountSensor(GEMSensor):
     """Entity showing pulse counts."""
 
+    _attr_entity_registry_enabled_default = True
     _attr_state_class = SensorStateClass.TOTAL
 
     def __init__(
@@ -372,6 +388,7 @@ class PulseCountSensor(GEMSensor):
             "count",
             sensor,
             sensor.number,
+            update_interval=DEFAULT_UPDATE_INTERVAL,
         )
         self._sensor: greeneye.monitor.PulseCounter = self._sensor
         self._counted_quantity_per_pulse = counted_quantity_per_pulse

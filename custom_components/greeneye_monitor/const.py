@@ -1,4 +1,5 @@
 """Constants for the greeneye_monitor component."""
+from datetime import timedelta
 
 CONF_CHANNELS = "channels"
 CONF_COUNTED_QUANTITY = "counted_quantity"
@@ -14,6 +15,7 @@ CONF_TIME_UNIT = "time_unit"
 CONF_VOLTAGE_SENSORS = "voltage"
 
 DATA_GREENEYE_MONITOR = "greeneye_monitor"
+DEFAULT_UPDATE_INTERVAL = timedelta(minutes=30)
 DEVICE_TYPE_CURRENT_TRANSFORMER = "channel"
 DEVICE_TYPE_PULSE_COUNTER = "pulse counter"
 DEVICE_TYPE_TEMPERATURE_SENSOR = "temperature"
