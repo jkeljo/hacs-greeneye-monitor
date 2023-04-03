@@ -10,6 +10,7 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import UnitOfElectricPotential
 from homeassistant.const import UnitOfPower
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_registry import async_get as get_entity_registry
 from homeassistant.helpers.entity_registry import RegistryEntry
 from homeassistant.util import slugify
@@ -49,7 +50,9 @@ def assert_temperature_sensor_registered(
     name: str,
 ):
     """Assert that a temperature sensor entity was registered properly."""
-    sensor = assert_sensor_registered(hass, serial_number, "temp", number, name)
+    sensor = assert_sensor_registered(
+        hass, serial_number, "temperature", "temp", number, name
+    )
     assert sensor.original_device_class is SensorDeviceClass.TEMPERATURE
 
 
@@ -62,7 +65,9 @@ def assert_pulse_counter_registered(
     per_time: str,
 ):
     """Assert that a pulse counter entity was registered properly."""
-    sensor = assert_sensor_registered(hass, serial_number, "pulse", number, name)
+    sensor = assert_sensor_registered(
+        hass, serial_number, "pulse counter", "pulse", number, name
+    )
     assert sensor.unit_of_measurement == f"{quantity}/{per_time}"
 
 
@@ -70,7 +75,9 @@ def assert_power_sensor_registered(
     hass: HomeAssistant, serial_number: int, number: int, name: str
 ) -> None:
     """Assert that a power sensor entity was registered properly."""
-    sensor = assert_sensor_registered(hass, serial_number, "current", number, name)
+    sensor = assert_sensor_registered(
+        hass, serial_number, "channel", "current", number, name
+    )
     assert sensor.unit_of_measurement == UnitOfPower.WATT
     assert sensor.original_device_class is SensorDeviceClass.POWER
 
@@ -79,7 +86,9 @@ def assert_voltage_sensor_registered(
     hass: HomeAssistant, serial_number: int, number: int, name: str
 ) -> None:
     """Assert that a voltage sensor entity was registered properly."""
-    sensor = assert_sensor_registered(hass, serial_number, "volts", number, name)
+    sensor = assert_sensor_registered(
+        hass, serial_number, "voltage", "volts", number, name
+    )
     assert sensor.unit_of_measurement == UnitOfElectricPotential.VOLT
     assert sensor.original_device_class is SensorDeviceClass.VOLTAGE
 
@@ -87,6 +96,7 @@ def assert_voltage_sensor_registered(
 def assert_sensor_registered(
     hass: HomeAssistant,
     serial_number: int,
+    device_type: str,
     sensor_type: str,
     number: int,
     name: str,
@@ -102,6 +112,18 @@ def assert_sensor_registered(
     assert sensor
     assert sensor.unique_id == unique_id
     assert sensor.entity_id == f"sensor.{slugify(name)}"
+
+    device_registry = dr.async_get(hass)
+    assert sensor.device_id is not None
+    device = device_registry.async_get(sensor.device_id)
+    assert device is not None
+    assert device.name == f"GEM {serial_number} {device_type} {number}"
+
+    assert device.via_device_id is not None
+    via_device = device_registry.async_get(device.via_device_id)
+    assert via_device is not None
+    assert via_device.name == f"GEM {serial_number}"
+    assert via_device.manufacturer == "Brultech"
 
     return sensor
 

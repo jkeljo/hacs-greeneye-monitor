@@ -81,7 +81,7 @@ async def test_setup_from_config_entry(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         3,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-3",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} pulse counter 3 rate",
         "gal",
         "h",
     )
@@ -115,7 +115,7 @@ async def test_setup_gets_updates_from_yaml(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         3,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-3",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} pulse counter 3 rate",
         "gal",
         "h",
     )
@@ -166,49 +166,49 @@ async def test_setup_creates_temperature_entities(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         1,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-temp-1",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} temperature 1",
     )
     assert_temperature_sensor_registered(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         2,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-temp-2",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} temperature 2",
     )
     assert_temperature_sensor_registered(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         3,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-temp-3",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} temperature 3",
     )
     assert_temperature_sensor_registered(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         4,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-temp-4",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} temperature 4",
     )
     assert_temperature_sensor_registered(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         5,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-temp-5",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} temperature 5",
     )
     assert_temperature_sensor_registered(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         6,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-temp-6",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} temperature 6",
     )
     assert_temperature_sensor_registered(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         7,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-temp-7",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} temperature 7",
     )
     assert_temperature_sensor_registered(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         8,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-temp-8",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} temperature 8",
     )
 
 
@@ -224,7 +224,7 @@ async def test_setup_creates_pulse_counter_entities(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         1,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-1",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} pulse counter 1 rate",
         "pulses",
         "s",
     )
@@ -232,7 +232,7 @@ async def test_setup_creates_pulse_counter_entities(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         2,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-2",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} pulse counter 2 rate",
         "gal",
         "min",
     )
@@ -240,7 +240,7 @@ async def test_setup_creates_pulse_counter_entities(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         3,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-3",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} pulse counter 3 rate",
         "gal",
         "h",
     )
@@ -248,7 +248,7 @@ async def test_setup_creates_pulse_counter_entities(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         4,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-4",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} pulse counter 4 rate",
         "pulses",
         "s",
     )
@@ -266,13 +266,13 @@ async def test_setup_creates_power_sensor_entities(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         1,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-current-1",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} channel 1",
     )
     assert_power_sensor_registered(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         2,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-current-2",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} channel 2",
     )
 
 
@@ -288,7 +288,7 @@ async def test_setup_creates_voltage_sensor_entities(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         1,
-        f"greeneye-{SINGLE_MONITOR_SERIAL_NUMBER}-volts-1",
+        f"GEM {SINGLE_MONITOR_SERIAL_NUMBER} voltage 1",
     )
 
 
@@ -303,9 +303,9 @@ async def test_multi_monitor_config(hass: HomeAssistant, monitors: AsyncMock) ->
     await connect_monitor(hass, monitors, 2)
     await connect_monitor(hass, monitors, 3)
 
-    assert_temperature_sensor_registered(hass, 1, 1, "greeneye-1-temp-1")
-    assert_temperature_sensor_registered(hass, 2, 1, "greeneye-2-temp-1")
-    assert_temperature_sensor_registered(hass, 3, 1, "greeneye-3-temp-1")
+    assert_temperature_sensor_registered(hass, 1, 1, "GEM 1 temperature 1")
+    assert_temperature_sensor_registered(hass, 2, 1, "GEM 2 temperature 1")
+    assert_temperature_sensor_registered(hass, 3, 1, "GEM 3 temperature 1")
 
 
 async def test_setup_and_shutdown(hass: HomeAssistant, monitors: AsyncMock) -> None:
