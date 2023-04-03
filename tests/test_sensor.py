@@ -48,9 +48,7 @@ async def test_sensors_created_when_monitor_connected(
         hass, SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
     )
 
-    assert len(monitors.listeners) == 1
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
-    assert len(monitors.listeners) == 0  # Make sure we cleaned up the listener
     assert_sensor_state(
         hass, f"sensor.gem_{SINGLE_MONITOR_SERIAL_NUMBER}_voltage_1", "120.0"
     )
@@ -83,7 +81,6 @@ async def test_sensors_created_during_setup_if_monitor_already_connected(
         hass, SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
     )
 
-    assert len(monitors.listeners) == 0  # Make sure we cleaned up the listener
     assert_sensor_state(
         hass, f"sensor.gem_{SINGLE_MONITOR_SERIAL_NUMBER}_voltage_1", "120.0"
     )

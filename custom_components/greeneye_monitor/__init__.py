@@ -131,7 +131,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     async def close_monitors(event: Event) -> None:
         """Close the Monitors object."""
-        await monitors.close()
+        monitors = hass.data.pop(DATA_GREENEYE_MONITOR, None)
+        if monitors:
+            await monitors.close()
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, close_monitors)
 
@@ -139,4 +141,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         hass.config_entries.async_forward_entry_setups(config_entry, [Platform.SENSOR])
     )
 
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Unload the GEM config entry."""
+    await hass.config_entries.async_forward_entry_unload(config_entry, Platform.SENSOR)
+
+    monitors = hass.data.pop(DATA_GREENEYE_MONITOR)
+    await monitors.close()
     return True

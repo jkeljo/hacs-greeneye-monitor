@@ -1,6 +1,7 @@
 """Support for the sensors in a GreenEye Monitor."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 from typing import cast
 
@@ -40,6 +41,8 @@ DATA_PULSES = "pulses"
 DATA_WATT_SECONDS = "watt_seconds"
 
 COUNTER_ICON = "mdi:counter"
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -132,10 +135,8 @@ async def async_setup_entry(
                 entities.append(VoltageSensor(monitor))
 
             async_add_entities(entities)
-            del monitor_configs[monitor.serial_number]
 
-        if len(monitor_configs) == 0:
-            monitors.remove_listener(on_new_monitor)
+            _LOGGER.info("Set up new monitor %d", monitor.serial_number)
 
     monitors: greeneye.Monitors = hass.data[DATA_GREENEYE_MONITOR]
     monitors.add_listener(on_new_monitor)
