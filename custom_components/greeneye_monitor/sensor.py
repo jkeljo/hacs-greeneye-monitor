@@ -76,7 +76,7 @@ async def async_setup_entry(
 
             net_metering = set(monitor_config[CONF_NET_METERING])
             for channel in monitor.channels:
-                channel_net_metered = channel.number in net_metering
+                channel_net_metered = str(channel.number) in net_metering
                 entities.append(
                     PowerSensor(
                         monitor,

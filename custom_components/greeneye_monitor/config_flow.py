@@ -22,7 +22,6 @@ from homeassistant.const import UnitOfVolume
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import DiscoveryInfoType
 
-from . import config_validation as gem_cv
 from .const import CONF_CHANNELS
 from .const import CONF_COUNTED_QUANTITY
 from .const import CONF_COUNTED_QUANTITY_PER_PULSE
@@ -151,7 +150,7 @@ PULSE_COUNTER_OPTIONS_SCHEMA = vol.Schema(
 
 PULSE_COUNTERS_OPTIONS_SCHEMA = vol.Schema(
     {
-        vol.Optional(gem_cv.pulseCounterNumber): PULSE_COUNTER_OPTIONS_SCHEMA,
+        vol.Optional(vol.Range(0, 3)): PULSE_COUNTER_OPTIONS_SCHEMA,
     }
 )
 
@@ -313,7 +312,7 @@ def yaml_to_config_entry(
                     CONF_TEMPERATURE_UNIT
                 ],
                 CONF_NET_METERING: [
-                    channel[CONF_NUMBER] - 1
+                    str(channel[CONF_NUMBER] - 1)
                     for channel in monitor[CONF_CHANNELS]
                     if channel[CONF_NET_METERING]
                 ],
@@ -346,4 +345,5 @@ def yaml_to_config_entry(
             for monitor in yaml[CONF_MONITORS]
         }
     }
+
     return data, options
