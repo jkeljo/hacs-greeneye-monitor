@@ -23,14 +23,12 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import Throttle
 
-from .const import CONF_CHANNELS
 from .const import CONF_COUNTED_QUANTITY
 from .const import CONF_COUNTED_QUANTITY_PER_PULSE
 from .const import CONF_DEVICE_CLASS
 from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
 from .const import CONF_PULSE_COUNTERS
-from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
 from .const import DATA_GREENEYE_MONITOR
 from .const import DEFAULT_UPDATE_INTERVAL
@@ -72,30 +70,29 @@ async def async_setup_entry(
                 model="GreenEye Monitor",
             )
 
-            channel_configs = monitor_config[CONF_CHANNELS]
+            net_metering = set(monitor_config[CONF_NET_METERING])
             for channel in monitor.channels:
-                config = channel_configs.get(channel.number)
-                if config:
-                    entities.append(
-                        PowerSensor(
-                            monitor,
-                            channel,
-                            config[CONF_NET_METERING],
-                        )
+                channel_net_metered = channel.number in net_metering
+                entities.append(
+                    PowerSensor(
+                        monitor,
+                        channel,
+                        channel_net_metered,
                     )
-                    entities.append(
-                        CurrentSensor(
-                            monitor,
-                            channel,
-                        )
+                )
+                entities.append(
+                    CurrentSensor(
+                        monitor,
+                        channel,
                     )
-                    entities.append(
-                        EnergySensor(
-                            monitor,
-                            channel,
-                            config[CONF_NET_METERING],
-                        )
+                )
+                entities.append(
+                    EnergySensor(
+                        monitor,
+                        channel,
+                        channel_net_metered,
                     )
+                )
 
             pulse_counter_configs = monitor_config[CONF_PULSE_COUNTERS]
             pulse_counter_options = monitor_option[CONF_PULSE_COUNTERS]
@@ -122,8 +119,7 @@ async def async_setup_entry(
                         )
                     )
 
-            temperature_config = monitor_config.get(CONF_TEMPERATURE_SENSORS, {})
-            temperature_unit = temperature_config.get(CONF_TEMPERATURE_UNIT)
+            temperature_unit = monitor_config.get(CONF_TEMPERATURE_UNIT)
             for temperature_sensor in monitor.temperature_sensors:
                 if temperature_unit:
                     entities.append(

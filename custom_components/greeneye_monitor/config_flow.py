@@ -1,13 +1,22 @@
 """Config flows for greeneye_monitor."""
 from typing import Tuple
 
+import greeneye
 import homeassistant.helpers.config_validation as cv
+import homeassistant.helpers.selector as selector
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant import data_entry_flow
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import CONF_PORT
 from homeassistant.const import CONF_TEMPERATURE_UNIT
+from homeassistant.const import UnitOfEnergy
+from homeassistant.const import UnitOfInformation
+from homeassistant.const import UnitOfLength
+from homeassistant.const import UnitOfPrecipitationDepth
+from homeassistant.const import UnitOfTemperature
 from homeassistant.const import UnitOfTime
+from homeassistant.const import UnitOfVolume
 from homeassistant.helpers.typing import DiscoveryInfoType
 
 from . import config_validation as gem_cv
@@ -23,51 +32,83 @@ from .const import CONF_SERIAL_NUMBER
 from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
 from .const import DOMAIN
-from .const import TEMPERATURE_UNIT_CELSIUS
 
-
-TEMPERATURE_SENSORS_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_TEMPERATURE_UNIT): cv.temperature_unit,
-    }
+COUNTED_QUANTITY_OPTIONS = list(
+    sorted(
+        set(
+            [
+                *[i.value for i in UnitOfVolume],
+                *[i.value for i in UnitOfEnergy],
+                *[i.value for i in UnitOfTime],
+                *[i.value for i in UnitOfLength],
+                *[i.value for i in UnitOfPrecipitationDepth],
+                *[i.value for i in UnitOfInformation],
+                "pulses",
+            ]
+        )
+    )
 )
+
 
 PULSE_COUNTER_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_COUNTED_QUANTITY): cv.string,
-        vol.Optional(CONF_DEVICE_CLASS, default=None): gem_cv.deviceClass,
-        vol.Optional(CONF_COUNTED_QUANTITY_PER_PULSE, default=1.0): vol.Coerce(float),
+        vol.Required(CONF_COUNTED_QUANTITY, default="pulses"): selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=COUNTED_QUANTITY_OPTIONS,
+            )
+        ),
+        vol.Required(CONF_COUNTED_QUANTITY_PER_PULSE, default=1.0): vol.Coerce(float),
+        vol.Optional(CONF_DEVICE_CLASS, default=None): vol.Maybe(
+            vol.Coerce(SensorDeviceClass)
+        ),
     }
 )
 
-PULSE_COUNTERS_SCHEMA = vol.Schema(
-    {
-        vol.Optional(gem_cv.pulseCounterNumber): PULSE_COUNTER_SCHEMA,
-    }
-)
 
-CHANNEL_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_NET_METERING, default=False): cv.boolean,
-    }
-)
+def make_pulse_counters_schema(
+    monitor: greeneye.monitor.Monitor | None = None,
+) -> vol.Schema:
+    num_pulse_counters = 4
+    if monitor and monitor.pulse_counters is not None:
+        num_pulse_counters = len(monitor.pulse_counters)
 
-CHANNELS_SCHEMA = vol.Schema(
-    {
-        vol.Optional(gem_cv.channelNumber): CHANNEL_SCHEMA,
-    }
-)
+    return vol.Schema(
+        {
+            vol.Optional(vol.Range(0, num_pulse_counters - 1)): PULSE_COUNTER_SCHEMA,
+        }
+    )
 
-MONITOR_SCHEMA = vol.Schema(
-    {
-        vol.Optional(
-            CONF_TEMPERATURE_SENSORS,
-            default={CONF_TEMPERATURE_UNIT: TEMPERATURE_UNIT_CELSIUS},
-        ): TEMPERATURE_SENSORS_SCHEMA,
-        vol.Optional(CONF_CHANNELS, default={}): CHANNELS_SCHEMA,
-        vol.Optional(CONF_PULSE_COUNTERS, default={}): PULSE_COUNTERS_SCHEMA,
-    }
-)
+
+def make_toplevel_schema(monitor: greeneye.monitor.Monitor | None = None) -> vol.Schema:
+    default_temperature_unit = UnitOfTemperature.CELSIUS
+    default_net_metering = []
+    num_channels = 48
+
+    net_metering_options = {str(i): i + 1 for i in range(0, num_channels)}
+
+    return vol.Schema(
+        {
+            vol.Optional(
+                CONF_TEMPERATURE_UNIT, default=default_temperature_unit
+            ): vol.Coerce(UnitOfTemperature),
+            vol.Optional(
+                CONF_NET_METERING, default=default_net_metering
+            ): cv.multi_select(net_metering_options),
+        }
+    )
+
+
+def make_monitor_schema(monitor: greeneye.monitor.Monitor | None = None) -> vol.Schema:
+    return make_toplevel_schema(monitor).extend(
+        {
+            vol.Optional(CONF_PULSE_COUNTERS, default={}): make_pulse_counters_schema(
+                monitor
+            ),
+        }
+    )
+
+
+MONITOR_SCHEMA = make_monitor_schema()
 
 MONITORS_SCHEMA = vol.Schema(
     {
@@ -75,8 +116,14 @@ MONITORS_SCHEMA = vol.Schema(
     }
 )
 
-CONFIG_ENTRY_DATA_SCHEMA = vol.Schema(
-    {vol.Required(CONF_PORT): cv.port, vol.Required(CONF_MONITORS): MONITORS_SCHEMA}
+PORT_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_PORT, description={"suggested_value": 8000}): cv.port,
+    }
+)
+
+CONFIG_ENTRY_DATA_SCHEMA = PORT_SCHEMA.extend(
+    {vol.Optional(CONF_MONITORS, default={}): MONITORS_SCHEMA}
 )
 
 PULSE_COUNTER_OPTIONS_SCHEMA = vol.Schema(
@@ -107,13 +154,15 @@ MONITORS_OPTIONS_SCHEMA = vol.Schema(
 
 CONFIG_ENTRY_OPTIONS_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_MONITORS): MONITORS_OPTIONS_SCHEMA,
+        vol.Optional(CONF_MONITORS, default={}): MONITORS_OPTIONS_SCHEMA,
     }
 )
 
 
 class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for greeneye_monitor."""
+
+    VERSION = 1
 
     async def async_step_import(
         self, discovery_info: DiscoveryInfoType
@@ -139,16 +188,14 @@ def yaml_to_config_entry(
         CONF_PORT: yaml[CONF_PORT],
         CONF_MONITORS: {
             monitor[CONF_SERIAL_NUMBER]: {
-                CONF_TEMPERATURE_SENSORS: {
-                    CONF_TEMPERATURE_UNIT: monitor[CONF_TEMPERATURE_SENSORS][
-                        CONF_TEMPERATURE_UNIT
-                    ],
-                },
-                CONF_CHANNELS: {
-                    channel[CONF_NUMBER]
-                    - 1: {CONF_NET_METERING: channel[CONF_NET_METERING]}
+                CONF_TEMPERATURE_UNIT: monitor[CONF_TEMPERATURE_SENSORS][
+                    CONF_TEMPERATURE_UNIT
+                ],
+                CONF_NET_METERING: [
+                    channel[CONF_NUMBER] - 1
                     for channel in monitor[CONF_CHANNELS]
-                },
+                    if channel[CONF_NET_METERING]
+                ],
                 CONF_PULSE_COUNTERS: {
                     pulse_counter[CONF_NUMBER]
                     - 1: {
