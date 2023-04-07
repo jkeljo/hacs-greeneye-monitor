@@ -17,6 +17,8 @@ from homeassistant.const import Platform
 from homeassistant.const import UnitOfTime
 from homeassistant.core import Event
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.issue_registry import IssueSeverity
 from homeassistant.helpers.typing import ConfigType
 
 from . import config_validation as gem_cv
@@ -113,6 +115,15 @@ CONFIG_SCHEMA = vol.Schema({DOMAIN: COMPONENT_SCHEMA}, extra=vol.ALLOW_EXTRA)
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Copy the YAML configuration to the config entry."""
     if server_config := config.get(DOMAIN):
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            "remove_yaml",
+            is_fixable=False,
+            severity=IssueSeverity.WARNING,
+            translation_key="remove_yaml",
+        )
+
         hass.async_create_task(
             hass.config_entries.flow.async_init(
                 DOMAIN, context={"source": SOURCE_IMPORT}, data=server_config
