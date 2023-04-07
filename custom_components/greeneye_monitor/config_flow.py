@@ -19,6 +19,7 @@ from homeassistant.const import UnitOfPrecipitationDepth
 from homeassistant.const import UnitOfTemperature
 from homeassistant.const import UnitOfTime
 from homeassistant.const import UnitOfVolume
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import DiscoveryInfoType
 
 from . import config_validation as gem_cv
@@ -189,6 +190,21 @@ class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 entry, data=data, options=options
             )
             self._abort_if_unique_id_configured()
+
+        # This integration used to name entities based on what the user had put in the YAML.
+        # Now it uses standardized entity names. If the user hasn't renamed an entity via the UI,
+        # if we do nothing, the entity name will change from something they had specified in the YAML
+        # to something generic. To avoid this, we look for entities that weren't renamed and we copy their
+        # old integration-defined names to user-defined ones.
+        entity_registry = er.async_get(self.hass)
+        for entry in entity_registry.entities.values():
+            if entry.platform != DOMAIN:
+                continue
+
+            if entry.name is None:
+                entity_registry.async_update_entity(
+                    entry.entity_id, name=entry.original_name
+                )
 
         return self.async_create_entry(
             title=CONFIG_ENTRY_TITLE, data=data, options=options

@@ -124,13 +124,6 @@ async def test_setup_gets_updates_from_yaml(
 
 
 async def test_previous_names_remain(hass: HomeAssistant, monitors: AsyncMock) -> None:
-    data, options = yaml_to_config_entry(
-        CONFIG_SCHEMA(SINGLE_MONITOR_CONFIG_PULSE_COUNTERS)[DOMAIN]
-    )
-    config_entry = MockConfigEntry(
-        domain=DOMAIN, unique_id=DOMAIN, data=data, options=options
-    )
-
     mock_registry(
         hass,
         {
@@ -138,15 +131,17 @@ async def test_previous_names_remain(hass: HomeAssistant, monitors: AsyncMock) -
                 entity_id="sensor.pulse_3",
                 unique_id=f"{SINGLE_MONITOR_SERIAL_NUMBER}-pulse-3",
                 platform=DOMAIN,
+                original_name="pulse_3",
             )
         },
     )
 
-    await hass.config_entries.async_add(config_entry)
-    await hass.async_block_till_done()
+    assert await setup_greeneye_monitor_component_with_config(
+        hass, SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
+    )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
 
-    assert_pulse_counter_registered(
+    pulse_counter = assert_pulse_counter_registered(
         hass,
         SINGLE_MONITOR_SERIAL_NUMBER,
         3,
@@ -154,6 +149,7 @@ async def test_previous_names_remain(hass: HomeAssistant, monitors: AsyncMock) -
         "gal",
         "h",
     )
+    assert pulse_counter.name == "pulse_3"
 
 
 async def test_setup_creates_temperature_entities(

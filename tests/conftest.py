@@ -71,12 +71,13 @@ def assert_pulse_counter_registered(
     name: str,
     quantity: str,
     per_time: str,
-):
+) -> RegistryEntry:
     """Assert that a pulse counter entity was registered properly."""
     sensor = assert_sensor_registered(
         hass, serial_number, "pulse counter", "pulse", number, name
     )
     assert sensor.unit_of_measurement == f"{quantity}/{per_time}"
+    return sensor
 
 
 def assert_power_sensor_registered(
