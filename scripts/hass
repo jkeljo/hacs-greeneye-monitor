@@ -2,4 +2,5 @@
 
 cd "$(dirname "$0")/.."
 
+cp custom_components/greeneye_monitor/strings.json custom_components/greeneye_monitor/translations/en.json
 hass -c . --debug
