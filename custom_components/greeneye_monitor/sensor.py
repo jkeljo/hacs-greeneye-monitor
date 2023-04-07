@@ -11,6 +11,7 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import SOURCE_INTEGRATION_DISCOVERY
 from homeassistant.const import CONF_TEMPERATURE_UNIT
 from homeassistant.const import UnitOfElectricCurrent
 from homeassistant.const import UnitOfElectricPotential
@@ -52,10 +53,13 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> bool:
     """Set up GEM sensors from the config entry"""
-    monitor_configs = config_entry.data[CONF_MONITORS]
-    monitor_options = config_entry.options[CONF_MONITORS]
+    entry_id = config_entry.entry_id
 
-    def on_new_monitor(monitor: greeneye.monitor.Monitor) -> None:
+    async def on_new_monitor(monitor: greeneye.monitor.Monitor) -> None:
+        config_entry = hass.config_entries.async_get_entry(entry_id)
+        monitor_configs = config_entry.data[CONF_MONITORS]
+        monitor_options = config_entry.options[CONF_MONITORS]
+
         monitor_config = monitor_configs.get(monitor.serial_number)
         monitor_option = monitor_options.get(monitor.serial_number)
         if monitor_config is not None and monitor_option is not None:
@@ -136,11 +140,20 @@ async def async_setup_entry(
             async_add_entities(entities)
 
             _LOGGER.info("Set up new monitor %d", monitor.serial_number)
+        else:
+            _LOGGER.info("Triggering config flow for %d", monitor.serial_number)
+            await hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={
+                    "source": SOURCE_INTEGRATION_DISCOVERY,
+                    "serial_number": monitor.serial_number,
+                },
+            )
 
     monitors: greeneye.Monitors = hass.data[DATA_GREENEYE_MONITOR]
     monitors.add_listener(on_new_monitor)
     for monitor in monitors.monitors.values():
-        on_new_monitor(monitor)
+        await on_new_monitor(monitor)
 
     return True
 

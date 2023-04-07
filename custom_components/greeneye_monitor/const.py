@@ -13,6 +13,7 @@ CONF_SERIAL_NUMBER = "serial_number"
 CONF_TEMPERATURE_SENSORS = "temperature_sensors"
 CONF_TIME_UNIT = "time_unit"
 CONF_VOLTAGE_SENSORS = "voltage"
+CONFIG_ENTRY_TITLE = "GreenEye Monitor"
 
 DATA_GREENEYE_MONITOR = "greeneye_monitor"
 DEFAULT_UPDATE_INTERVAL = timedelta(minutes=30)

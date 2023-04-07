@@ -1,10 +1,12 @@
 """Config flows for greeneye_monitor."""
+from copy import deepcopy
 from typing import Tuple
 
 import greeneye
 import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.selector as selector
 import voluptuous as vol
+from greeneye.api import TemperatureUnit
 from homeassistant import config_entries
 from homeassistant import data_entry_flow
 from homeassistant.components.sensor import SensorDeviceClass
@@ -31,6 +33,7 @@ from .const import CONF_PULSE_COUNTERS
 from .const import CONF_SERIAL_NUMBER
 from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
+from .const import CONFIG_ENTRY_TITLE
 from .const import DOMAIN
 
 COUNTED_QUANTITY_OPTIONS = list(
@@ -81,8 +84,19 @@ def make_pulse_counters_schema(
 
 def make_toplevel_schema(monitor: greeneye.monitor.Monitor | None = None) -> vol.Schema:
     default_temperature_unit = UnitOfTemperature.CELSIUS
+    if monitor and monitor.temperature_sensors:
+        if monitor.temperature_sensors[0].unit == TemperatureUnit.CELSIUS:
+            default_temperature_unit = UnitOfTemperature.CELSIUS
+        else:
+            default_temperature_unit = UnitOfTemperature.FAHRENHEIT
+
     default_net_metering = []
     num_channels = 48
+    if monitor and monitor.channels is not None:
+        num_channels = len(monitor.channels)
+        default_net_metering = [
+            str(channel.number) for channel in monitor.channels if channel.net_metering
+        ]
 
     net_metering_options = {str(i): i + 1 for i in range(0, num_channels)}
 
@@ -177,7 +191,98 @@ class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
 
         return self.async_create_entry(
-            title="GreenEye Monitor", data=data, options=options
+            title=CONFIG_ENTRY_TITLE, data=data, options=options
+        )
+
+    async def async_step_user(
+        self, user_input: DiscoveryInfoType
+    ) -> data_entry_flow.FlowResult:
+        if user_input is not None:
+            return self.async_create_entry(
+                title=CONFIG_ENTRY_TITLE,
+                data=CONFIG_ENTRY_DATA_SCHEMA(user_input),
+                options=CONFIG_ENTRY_OPTIONS_SCHEMA({}),
+            )
+
+        await self.async_set_unique_id(DOMAIN)
+        self._abort_if_unique_id_configured()
+
+        return self.async_show_form(step_id="user", data_schema=PORT_SCHEMA)
+
+    async def async_step_integration_discovery(
+        self,
+        monitor_info: DiscoveryInfoType,
+    ) -> data_entry_flow.FlowResult:
+        if monitor_info:
+            self._net_metering = monitor_info[CONF_NET_METERING]
+            self._temperature_unit = monitor_info[CONF_TEMPERATURE_UNIT]
+            self._pulse_counters = []
+            return await self.async_step_pulse_counter()
+
+        serial_number = self.context["serial_number"]
+        monitors: greeneye.Monitors = self.hass.data[DOMAIN]
+        self._monitor = monitors.monitors[serial_number]
+        schema = make_toplevel_schema(self._monitor)
+        self.context["title_placeholders"] = {
+            "device_name": f"GreenEye Monitor {serial_number}",
+            "serial_number": f"{serial_number}",
+        }
+        return self.async_show_form(
+            step_id="integration_discovery",
+            data_schema=schema,
+            description_placeholders={
+                "serial_number": f"{serial_number}",
+                "device_name": f"GEM {serial_number}",
+            },
+        )
+
+    async def async_step_pulse_counter(
+        self, pulse_counter_info: DiscoveryInfoType | None = None
+    ) -> data_entry_flow.FlowResult:
+        if pulse_counter_info:
+            self._pulse_counters.append(pulse_counter_info)
+            if len(self._pulse_counters) < len(self._monitor.pulse_counters):
+                return await self.async_step_pulse_counter()
+
+        if pulse_counter_info or not self._monitor.pulse_counters:
+            config_entry = await self.async_set_unique_id(DOMAIN)
+            assert config_entry
+            new_data = deepcopy(dict(config_entry.data))
+            new_data[CONF_MONITORS][self._monitor.serial_number] = MONITOR_SCHEMA(
+                {
+                    CONF_TEMPERATURE_UNIT: self._temperature_unit,
+                    CONF_NET_METERING: self._net_metering,
+                    CONF_PULSE_COUNTERS: {
+                        i: pulse_counter
+                        for i, pulse_counter in enumerate(self._pulse_counters)
+                    },
+                }
+            )
+            new_options = deepcopy(dict(config_entry.options))
+            new_options[CONF_MONITORS][self._monitor.serial_number] = {
+                CONF_PULSE_COUNTERS: {
+                    i: PULSE_COUNTER_OPTIONS_SCHEMA({})
+                    for i, _ in enumerate(self._pulse_counters)
+                }
+            }
+
+            self.hass.config_entries.async_update_entry(
+                config_entry, data=new_data, options=new_options
+            )
+            await self.hass.config_entries.async_reload(config_entry.entry_id)
+            return self.async_abort(
+                reason="success",
+                description_placeholders={
+                    "serial_number": f"{self._monitor.serial_number}"
+                },
+            )
+
+        return self.async_show_form(
+            step_id="pulse_counter",
+            data_schema=PULSE_COUNTER_SCHEMA,
+            description_placeholders={
+                "pulse_counter_number": f"{len(self._pulse_counters) + 1}"
+            },
         )
 
 
