@@ -1,6 +1,7 @@
 """Common helpers for greeneye_monitor tests."""
 from __future__ import annotations
 
+import inspect
 from typing import Any
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
@@ -189,9 +190,9 @@ def add_listeners(mock: MagicMock | AsyncMock) -> None:
     mock.add_listener = mock.listeners.append
     mock.remove_listener = mock.listeners.remove
 
-    def notify_all_listeners(*args):
+    async def notify_all_listeners(*args):
         for listener in list(mock.listeners):
-            listener(*args)
+            await _ensure_coroutine(listener)(*args)
 
     mock.notify_all_listeners = notify_all_listeners
 
@@ -248,6 +249,17 @@ async def connect_monitor(
 ) -> MagicMock:
     """Simulate a monitor connecting to Home Assistant. Returns the mock monitor API object."""
     monitor = mock_monitor(serial_number)
-    monitors.add_monitor(monitor)
+    await monitors.add_monitor(monitor)
     await hass.async_block_till_done()
     return monitor
+
+
+def _ensure_coroutine(listener):
+    if inspect.iscoroutinefunction(listener):
+        return listener
+    else:
+
+        async def async_listener(*args):
+            listener(*args)
+
+        return async_listener

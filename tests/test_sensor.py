@@ -115,7 +115,7 @@ async def test_updates_state_when_sensor_pushes(
     )
 
     monitor.voltage_sensor.voltage = 119.8
-    monitor.voltage_sensor.notify_all_listeners()
+    await monitor.voltage_sensor.notify_all_listeners()
     assert_sensor_state(
         hass, f"sensor.gem_{SINGLE_MONITOR_SERIAL_NUMBER}_voltage_1", "119.8"
     )
@@ -153,8 +153,8 @@ async def test_power_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
     monitor = await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
     monitor.channels[0].watts = 120.0
     monitor.channels[1].watts = 120.0
-    monitor.channels[0].notify_all_listeners()
-    monitor.channels[1].notify_all_listeners()
+    await monitor.channels[0].notify_all_listeners()
+    await monitor.channels[1].notify_all_listeners()
     assert_sensor_state(
         hass,
         f"sensor.gem_{SINGLE_MONITOR_SERIAL_NUMBER}_channel_1",
@@ -179,8 +179,8 @@ async def test_energy_sensor(hass: HomeAssistant, monitors: AsyncMock) -> None:
     monitor = await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
     monitor.channels[0].watts = 120.0
     monitor.channels[1].watts = 120.0
-    monitor.channels[0].notify_all_listeners()
-    monitor.channels[1].notify_all_listeners()
+    await monitor.channels[0].notify_all_listeners()
+    await monitor.channels[1].notify_all_listeners()
     assert_sensor_state(
         hass, f"sensor.gem_{SINGLE_MONITOR_SERIAL_NUMBER}_channel_1_energy", "42"
     )
@@ -202,9 +202,9 @@ async def test_pulse_counter_initially_unknown(
     monitor.pulse_counters[0].pulses_per_second = None
     monitor.pulse_counters[1].pulses_per_second = None
     monitor.pulse_counters[2].pulses_per_second = None
-    monitor.pulse_counters[0].notify_all_listeners()
-    monitor.pulse_counters[1].notify_all_listeners()
-    monitor.pulse_counters[2].notify_all_listeners()
+    await monitor.pulse_counters[0].notify_all_listeners()
+    await monitor.pulse_counters[1].notify_all_listeners()
+    await monitor.pulse_counters[2].notify_all_listeners()
     assert_sensor_state(
         hass,
         f"sensor.gem_{SINGLE_MONITOR_SERIAL_NUMBER}_pulse_counter_1_rate",
