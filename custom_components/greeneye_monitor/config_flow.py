@@ -22,6 +22,7 @@ from homeassistant.const import UnitOfVolume
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import DiscoveryInfoType
 
+from . import config_validation as gem_cv
 from .const import CONF_CHANNELS
 from .const import CONF_COUNTED_QUANTITY
 from .const import CONF_COUNTED_QUANTITY_PER_PULSE
@@ -77,7 +78,13 @@ def make_pulse_counters_schema(
 
     return vol.Schema(
         {
-            vol.Optional(vol.Range(0, num_pulse_counters - 1)): PULSE_COUNTER_SCHEMA,
+            vol.Optional(
+                vol.All(
+                    vol.Coerce(int),
+                    vol.Range(0, num_pulse_counters - 1),
+                    vol.Coerce(str),
+                )
+            ): PULSE_COUNTER_SCHEMA,
         }
     )
 
@@ -126,7 +133,7 @@ MONITOR_SCHEMA = make_monitor_schema()
 
 MONITORS_SCHEMA = vol.Schema(
     {
-        vol.Optional(cv.positive_int): MONITOR_SCHEMA,
+        vol.Optional(gem_cv.serialNumberStr): MONITOR_SCHEMA,
     }
 )
 
@@ -150,7 +157,9 @@ PULSE_COUNTER_OPTIONS_SCHEMA = vol.Schema(
 
 PULSE_COUNTERS_OPTIONS_SCHEMA = vol.Schema(
     {
-        vol.Optional(vol.Range(0, 3)): PULSE_COUNTER_OPTIONS_SCHEMA,
+        vol.Optional(
+            vol.All(vol.Coerce(int), vol.Range(0, 3), vol.Coerce(str))
+        ): PULSE_COUNTER_OPTIONS_SCHEMA,
     }
 )
 
@@ -162,7 +171,7 @@ MONITOR_OPTIONS_SCHEMA = vol.Schema(
 
 MONITORS_OPTIONS_SCHEMA = vol.Schema(
     {
-        vol.Optional(cv.positive_int): MONITOR_OPTIONS_SCHEMA,
+        vol.Optional(gem_cv.serialNumberStr): MONITOR_OPTIONS_SCHEMA,
     }
 )
 
@@ -268,18 +277,21 @@ class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_TEMPERATURE_UNIT: self._temperature_unit,
                     CONF_NET_METERING: self._net_metering,
                     CONF_PULSE_COUNTERS: {
-                        i: pulse_counter
+                        str(i): pulse_counter
                         for i, pulse_counter in enumerate(self._pulse_counters)
                     },
                 }
             )
+            new_data = CONFIG_ENTRY_DATA_SCHEMA(new_data)
+
             new_options = deepcopy(dict(config_entry.options))
             new_options[CONF_MONITORS][self._monitor.serial_number] = {
                 CONF_PULSE_COUNTERS: {
-                    i: PULSE_COUNTER_OPTIONS_SCHEMA({})
+                    str(i): PULSE_COUNTER_OPTIONS_SCHEMA({})
                     for i, _ in enumerate(self._pulse_counters)
                 }
             }
+            new_options = CONFIG_ENTRY_OPTIONS_SCHEMA(new_options)
 
             self.hass.config_entries.async_update_entry(
                 config_entry, data=new_data, options=new_options
@@ -304,46 +316,48 @@ class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 def yaml_to_config_entry(
     yaml: DiscoveryInfoType,
 ) -> Tuple[DiscoveryInfoType, DiscoveryInfoType]:
-    data = {
-        CONF_PORT: yaml[CONF_PORT],
-        CONF_MONITORS: {
-            monitor[CONF_SERIAL_NUMBER]: {
-                CONF_TEMPERATURE_UNIT: monitor[CONF_TEMPERATURE_SENSORS][
-                    CONF_TEMPERATURE_UNIT
-                ],
-                CONF_NET_METERING: [
-                    str(channel[CONF_NUMBER] - 1)
-                    for channel in monitor[CONF_CHANNELS]
-                    if channel[CONF_NET_METERING]
-                ],
-                CONF_PULSE_COUNTERS: {
-                    pulse_counter[CONF_NUMBER]
-                    - 1: {
-                        CONF_DEVICE_CLASS: pulse_counter[CONF_DEVICE_CLASS],
-                        CONF_COUNTED_QUANTITY: pulse_counter[CONF_COUNTED_QUANTITY],
-                        CONF_COUNTED_QUANTITY_PER_PULSE: pulse_counter[
-                            CONF_COUNTED_QUANTITY_PER_PULSE
-                        ],
-                    }
-                    for pulse_counter in monitor[CONF_PULSE_COUNTERS]
-                },
-            }
-            for monitor in yaml[CONF_MONITORS]
-        },
-    }
-    options = {
-        CONF_MONITORS: {
-            monitor[CONF_SERIAL_NUMBER]: {
-                CONF_PULSE_COUNTERS: {
-                    pulse_counter[CONF_NUMBER]
-                    - 1: {
-                        CONF_TIME_UNIT: pulse_counter[CONF_TIME_UNIT],
-                    }
-                    for pulse_counter in monitor[CONF_PULSE_COUNTERS]
-                },
-            }
-            for monitor in yaml[CONF_MONITORS]
+    data = CONFIG_ENTRY_DATA_SCHEMA(
+        {
+            CONF_PORT: yaml[CONF_PORT],
+            CONF_MONITORS: {
+                str(monitor[CONF_SERIAL_NUMBER]): {
+                    CONF_TEMPERATURE_UNIT: monitor[CONF_TEMPERATURE_SENSORS][
+                        CONF_TEMPERATURE_UNIT
+                    ],
+                    CONF_NET_METERING: [
+                        str(channel[CONF_NUMBER] - 1)
+                        for channel in monitor[CONF_CHANNELS]
+                        if channel[CONF_NET_METERING]
+                    ],
+                    CONF_PULSE_COUNTERS: {
+                        str(pulse_counter[CONF_NUMBER] - 1): {
+                            CONF_DEVICE_CLASS: pulse_counter[CONF_DEVICE_CLASS],
+                            CONF_COUNTED_QUANTITY: pulse_counter[CONF_COUNTED_QUANTITY],
+                            CONF_COUNTED_QUANTITY_PER_PULSE: pulse_counter[
+                                CONF_COUNTED_QUANTITY_PER_PULSE
+                            ],
+                        }
+                        for pulse_counter in monitor[CONF_PULSE_COUNTERS]
+                    },
+                }
+                for monitor in yaml[CONF_MONITORS]
+            },
         }
-    }
+    )
+    options = CONFIG_ENTRY_OPTIONS_SCHEMA(
+        {
+            CONF_MONITORS: {
+                str(monitor[CONF_SERIAL_NUMBER]): {
+                    CONF_PULSE_COUNTERS: {
+                        str(pulse_counter[CONF_NUMBER] - 1): {
+                            CONF_TIME_UNIT: pulse_counter[CONF_TIME_UNIT],
+                        }
+                        for pulse_counter in monitor[CONF_PULSE_COUNTERS]
+                    },
+                }
+                for monitor in yaml[CONF_MONITORS]
+            }
+        }
+    )
 
     return data, options

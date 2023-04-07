@@ -50,10 +50,10 @@ async def test_setup_creates_config_entry(
     )
 
     normalized_entry_schema = CONFIG_ENTRY_DATA_SCHEMA(
-        {CONF_PORT: 7513, CONF_MONITORS: {SINGLE_MONITOR_SERIAL_NUMBER: {}}}
+        {CONF_PORT: 7513, CONF_MONITORS: {str(SINGLE_MONITOR_SERIAL_NUMBER): {}}}
     )
     normalized_options_schema = CONFIG_ENTRY_OPTIONS_SCHEMA(
-        {CONF_MONITORS: {SINGLE_MONITOR_SERIAL_NUMBER: {}}}
+        {CONF_MONITORS: {str(SINGLE_MONITOR_SERIAL_NUMBER): {}}}
     )
 
     entries = hass.config_entries.async_entries(DOMAIN)

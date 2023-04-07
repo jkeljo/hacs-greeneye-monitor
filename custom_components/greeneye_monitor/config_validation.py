@@ -6,19 +6,22 @@ import voluptuous as vol
 from homeassistant.components.sensor import SensorDeviceClass
 
 
-def serialNumber(value: Any) -> int:
-    return vol.All(
-        cv.string,
-        vol.Length(
-            min=8,
-            max=8,
-            msg=(
-                "GEM serial number must be specified as an 8-character "
-                "string (including leading zeroes)."
-            ),
+serialNumber = vol.All(
+    str,
+    vol.Length(
+        min=8,
+        max=8,
+        msg=(
+            "GEM serial number must be specified as an 8-character "
+            "string (including leading zeroes)."
         ),
-        vol.Coerce(int),
-    )(value)
+    ),
+    vol.Coerce(int),
+)
+
+serialNumberStr = vol.All(
+    str, vol.Length(min=1, max=8), vol.Coerce(int), vol.Coerce(str)
+)
 
 
 def temperatureSensorNumber(value: Any) -> int:

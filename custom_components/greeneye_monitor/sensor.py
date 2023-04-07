@@ -60,8 +60,9 @@ async def async_setup_entry(
         monitor_configs = config_entry.data[CONF_MONITORS]
         monitor_options = config_entry.options[CONF_MONITORS]
 
-        monitor_config = monitor_configs.get(monitor.serial_number)
-        monitor_option = monitor_options.get(monitor.serial_number)
+        serial_number = str(monitor.serial_number)
+        monitor_config = monitor_configs.get(serial_number)
+        monitor_option = monitor_options.get(serial_number)
         if monitor_config is not None and monitor_option is not None:
             entities: list[GEMSensor] = []
 
@@ -101,8 +102,8 @@ async def async_setup_entry(
             pulse_counter_configs = monitor_config[CONF_PULSE_COUNTERS]
             pulse_counter_options = monitor_option[CONF_PULSE_COUNTERS]
             for pulse_counter in monitor.pulse_counters:
-                config = pulse_counter_configs.get(pulse_counter.number)
-                options = pulse_counter_options.get(pulse_counter.number)
+                config = pulse_counter_configs.get(str(pulse_counter.number))
+                options = pulse_counter_options.get(str(pulse_counter.number))
                 if config and options:
                     entities.append(
                         PulseRateSensor(
