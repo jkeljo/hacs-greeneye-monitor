@@ -40,6 +40,8 @@ from .const import DEVICE_TYPE_PULSE_COUNTER
 from .const import DEVICE_TYPE_TEMPERATURE_SENSOR
 from .const import DEVICE_TYPE_VOLTAGE_SENSOR
 from .const import DOMAIN
+from .const import get_monitor_type_long_name
+from .const import get_monitor_type_short_name
 
 DATA_PULSES = "pulses"
 DATA_WATT_SECONDS = "watt_seconds"
@@ -82,12 +84,14 @@ async def async_setup_entry(
             entities: list[GEMSensor] = []
 
             device_registry = dr.async_get(hass)
+            monitor_type_short_name = get_monitor_type_short_name(monitor)
+            monitor_type_long_name = get_monitor_type_long_name(monitor)
             device_registry.async_get_or_create(
                 config_entry_id=config_entry.entry_id,
                 identifiers={(DOMAIN, f"{monitor.serial_number}")},
                 manufacturer="Brultech",
-                name=f"GEM {monitor.serial_number}",
-                model="GreenEye Monitor",
+                name=f"{monitor_type_short_name} {monitor.serial_number}",
+                model=monitor_type_long_name,
             )
 
             net_metering = set(monitor_config[CONF_NET_METERING])
@@ -227,6 +231,7 @@ class GEMSensor(SensorEntity):
 
     @property
     def device_info(self) -> DeviceInfo | None:
+        monitor_type_short_name = get_monitor_type_short_name(self._monitor)
         return DeviceInfo(
             identifiers={
                 (
@@ -237,7 +242,7 @@ class GEMSensor(SensorEntity):
                     ),
                 )
             },
-            name=f"GEM {self._monitor_serial_number} {self._device_type} {self._number + 1}",
+            name=f"{monitor_type_short_name} {self._monitor_serial_number} {self._device_type} {self._number + 1}",
             via_device=(DOMAIN, f"{self._monitor.serial_number}"),
         )
 

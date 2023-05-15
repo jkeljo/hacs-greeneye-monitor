@@ -7,6 +7,7 @@ import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.selector as selector
 import voluptuous as vol
 from greeneye.api import TemperatureUnit
+from greeneye.monitor import MonitorType
 from homeassistant import config_entries
 from homeassistant import data_entry_flow
 from homeassistant.components.sensor import SensorDeviceClass
@@ -36,6 +37,8 @@ from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
 from .const import CONFIG_ENTRY_TITLE
 from .const import DOMAIN
+from .const import get_monitor_type_long_name
+from .const import get_monitor_type_short_name
 
 COUNTED_QUANTITY_OPTIONS = list(
     sorted(
@@ -97,16 +100,23 @@ def make_toplevel_schema(monitor: greeneye.monitor.Monitor | None = None) -> vol
 
     net_metering_options = {str(i): i + 1 for i in range(0, num_channels)}
 
-    return vol.Schema(
+    schema = vol.Schema(
         {
-            vol.Optional(
-                CONF_TEMPERATURE_UNIT, default=default_temperature_unit
-            ): vol.Coerce(UnitOfTemperature),
             vol.Optional(
                 CONF_NET_METERING, default=default_net_metering
             ): cv.multi_select(net_metering_options),
         }
     )
+    if not monitor or monitor.type == MonitorType.GEM:
+        schema = schema.extend(
+            {
+                vol.Optional(
+                    CONF_TEMPERATURE_UNIT, default=default_temperature_unit
+                ): vol.Coerce(UnitOfTemperature),
+            }
+        )
+
+    return schema
 
 
 def make_monitor_schema(monitor: greeneye.monitor.Monitor | None = None) -> vol.Schema:
@@ -217,13 +227,15 @@ class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> data_entry_flow.FlowResult:
         if monitor_info:
             self._net_metering = monitor_info[CONF_NET_METERING]
-            self._temperature_unit = monitor_info[CONF_TEMPERATURE_UNIT]
+            self._temperature_unit = monitor_info.get(CONF_TEMPERATURE_UNIT)
             self._pulse_counters = []
             return await self.async_step_pulse_counter()
 
         serial_number = self.context["serial_number"]
         monitors: greeneye.Monitors = self.hass.data[DOMAIN]
         self._monitor = monitors.monitors[serial_number]
+        monitor_type_short_name = get_monitor_type_short_name(self._monitor)
+        monitor_type_long_name = get_monitor_type_long_name(self._monitor)
 
         config_entry = await self.async_set_unique_id(DOMAIN)
         assert config_entry
@@ -236,8 +248,9 @@ class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
 
         schema = make_toplevel_schema(self._monitor)
+
         self.context["title_placeholders"] = {
-            "device_name": f"GreenEye Monitor {serial_number}",
+            "device_name": f"{monitor_type_long_name} {serial_number}",
             "serial_number": f"{serial_number}",
         }
         return self.async_show_form(
@@ -245,7 +258,7 @@ class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=schema,
             description_placeholders={
                 "serial_number": f"{serial_number}",
-                "device_name": f"GEM {serial_number}",
+                "device_name": f"{monitor_type_short_name} {serial_number}",
             },
         )
 
@@ -261,16 +274,14 @@ class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             config_entry = await self.async_set_unique_id(DOMAIN)
             assert config_entry
             new_data = deepcopy(dict(config_entry.data))
-            new_data[CONF_MONITORS].append(
-                MONITOR_SCHEMA(
-                    {
-                        CONF_SERIAL_NUMBER: self._monitor.serial_number,
-                        CONF_TEMPERATURE_UNIT: self._temperature_unit,
-                        CONF_NET_METERING: self._net_metering,
-                        CONF_PULSE_COUNTERS: self._pulse_counters,
-                    }
-                )
-            )
+            monitor_data = {
+                CONF_SERIAL_NUMBER: self._monitor.serial_number,
+                CONF_NET_METERING: self._net_metering,
+                CONF_PULSE_COUNTERS: self._pulse_counters,
+            }
+            if self._temperature_unit:
+                monitor_data[CONF_TEMPERATURE_UNIT] = self._temperature_unit
+            new_data[CONF_MONITORS].append(MONITOR_SCHEMA(monitor_data))
             new_data = CONFIG_ENTRY_DATA_SCHEMA(new_data)
 
             new_options = deepcopy(dict(config_entry.options))

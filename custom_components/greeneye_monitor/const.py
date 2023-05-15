@@ -1,6 +1,9 @@
 """Constants for the greeneye_monitor component."""
 from datetime import timedelta
 
+from greeneye.monitor import Monitor
+from greeneye.monitor import MonitorType
+
 CONF_CHANNELS = "channels"
 CONF_COUNTED_QUANTITY = "counted_quantity"
 CONF_COUNTED_QUANTITY_PER_PULSE = "counted_quantity_per_pulse"
@@ -25,3 +28,23 @@ DEVICE_TYPE_VOLTAGE_SENSOR = "voltage"
 DOMAIN = "greeneye_monitor"
 
 TEMPERATURE_UNIT_CELSIUS = "C"
+
+
+def get_monitor_type_short_name(monitor: Monitor) -> str:
+    if monitor.type == MonitorType.GEM:
+        return "GEM"
+    elif monitor.type in [MonitorType.ECM_1220, MonitorType.ECM_1240]:
+        return "ECM"
+    else:
+        assert False
+
+
+def get_monitor_type_long_name(monitor: Monitor) -> str:
+    if monitor.type == MonitorType.GEM:
+        return "GreenEye Monitor"
+    elif monitor.type == MonitorType.ECM_1240:
+        return "ECM-1240"
+    elif monitor.type == MonitorType.ECM_1220:
+        return "ECM-1220/1240"
+    else:
+        assert False
