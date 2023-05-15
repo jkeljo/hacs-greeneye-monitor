@@ -4,6 +4,10 @@
   "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.10-bullseye",
   "runArgs": ["-e", "EDITOR=code --wait"],
   "postStartCommand": "scripts/bootstrap",
+  "mounts": [
+    "source=${localWorkspaceFolder}/../greeneye-monitor,target=/workspaces/greeneye-monitor,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/../siobrultech-protocols,target=/workspaces/siobrultech-protocols,type=bind,consistency=cached"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
