@@ -30,6 +30,7 @@ from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
 from .const import CONF_NUMBER
 from .const import CONF_PULSE_COUNTERS
+from .const import CONF_SEND_PACKET_DELAY
 from .const import CONF_SERIAL_NUMBER
 from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
@@ -154,6 +155,7 @@ MONITORS_OPTIONS_SCHEMA = vol.All(cv.ensure_list, [MONITOR_OPTIONS_SCHEMA])
 CONFIG_ENTRY_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_MONITORS, default=[]): MONITORS_OPTIONS_SCHEMA,
+        vol.Optional(CONF_SEND_PACKET_DELAY, default=False): bool,
     }
 )
 

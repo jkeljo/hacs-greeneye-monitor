@@ -30,6 +30,7 @@ from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
 from .const import CONF_NUMBER
 from .const import CONF_PULSE_COUNTERS
+from .const import CONF_SEND_PACKET_DELAY
 from .const import CONF_SERIAL_NUMBER
 from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
@@ -135,7 +136,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Setup the GreenEye Monitor component from a config entry."""
-    monitors = greeneye.Monitors()
+    send_packet_delay = config_entry.options[CONF_SEND_PACKET_DELAY]
+    monitors = greeneye.Monitors(send_packet_delay=send_packet_delay)
     hass.data[DATA_GREENEYE_MONITOR] = monitors
 
     await monitors.start_server(config_entry.data[CONF_PORT])
