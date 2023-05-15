@@ -29,7 +29,9 @@ from .const import CONF_COUNTED_QUANTITY_PER_PULSE
 from .const import CONF_DEVICE_CLASS
 from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
+from .const import CONF_NUMBER
 from .const import CONF_PULSE_COUNTERS
+from .const import CONF_SERIAL_NUMBER
 from .const import CONF_TIME_UNIT
 from .const import DATA_GREENEYE_MONITOR
 from .const import DEFAULT_UPDATE_INTERVAL
@@ -60,9 +62,22 @@ async def async_setup_entry(
         monitor_configs = config_entry.data[CONF_MONITORS]
         monitor_options = config_entry.options[CONF_MONITORS]
 
-        serial_number = str(monitor.serial_number)
-        monitor_config = monitor_configs.get(serial_number)
-        monitor_option = monitor_options.get(serial_number)
+        serial_number = monitor.serial_number
+        monitor_config = next(
+            filter(
+                lambda config: config[CONF_SERIAL_NUMBER] == serial_number,
+                monitor_configs,
+            ),
+            None,
+        )
+        monitor_option = next(
+            filter(
+                lambda option: option[CONF_SERIAL_NUMBER] == serial_number,
+                monitor_options,
+            ),
+            None,
+        )
+
         if monitor_config is not None and monitor_option is not None:
             entities: list[GEMSensor] = []
 
@@ -102,8 +117,20 @@ async def async_setup_entry(
             pulse_counter_configs = monitor_config[CONF_PULSE_COUNTERS]
             pulse_counter_options = monitor_option[CONF_PULSE_COUNTERS]
             for pulse_counter in monitor.pulse_counters:
-                config = pulse_counter_configs.get(str(pulse_counter.number))
-                options = pulse_counter_options.get(str(pulse_counter.number))
+                config = next(
+                    filter(
+                        lambda config: config[CONF_NUMBER] == pulse_counter.number,
+                        pulse_counter_configs,
+                    ),
+                    None,
+                )
+                options = next(
+                    filter(
+                        lambda option: option[CONF_NUMBER] == pulse_counter.number,
+                        pulse_counter_options,
+                    ),
+                    None,
+                )
                 if config and options:
                     entities.append(
                         PulseRateSensor(
