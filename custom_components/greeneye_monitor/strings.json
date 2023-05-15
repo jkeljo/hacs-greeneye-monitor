@@ -17,7 +17,7 @@
         "title": "Configure new monitor",
         "data": {
           "temperature_unit": "Temperature unit",
-          "net_metering": "Net metering"
+          "net_metering": "Channels with net metering"
         },
         "data_description": {
           "temperature_unit": "What unit of temperature is the monitor configured to use? Find this in the 'Temp Degree' section of the GEM UI. Note: this might be different from what Home Assistant is configured to use.",
