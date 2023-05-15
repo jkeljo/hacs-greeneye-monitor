@@ -38,6 +38,35 @@
       }
     }
   },
+  "options": {
+    "step": {
+      "options_menu": {
+        "title": "Choose options to edit",
+        "menu_options": {
+          "global_options": "Edit global options",
+          "choose_monitor": "Edit per-monitor options"
+        }
+      },
+      "global_options": {
+        "title": "Global options",
+        "data": {
+          "send_packet_delay": "Request packet delay for GEM API calls"
+        },
+        "data_description": {
+          "send_packet_delay": "Experimental. Leave it False unless a @jkeljo has told you to set it to True."
+        }
+      },
+      "choose_monitor": {
+        "title": "Choose monitor",
+        "data": {
+          "serial_number": "Serial number"
+        },
+        "data_description": {
+          "serial_number": "Select the serial number of a monitor to edit its options."
+        }
+      }
+    }
+  },
   "issues": {
     "remove_yaml": {
       "title": "Brultech no longer uses YAML configuration",

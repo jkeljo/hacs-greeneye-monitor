@@ -1,5 +1,6 @@
 """Config flows for brultech."""
 from copy import deepcopy
+from typing import Any
 from typing import Tuple
 
 import greeneye
@@ -20,6 +21,7 @@ from homeassistant.const import UnitOfPrecipitationDepth
 from homeassistant.const import UnitOfTemperature
 from homeassistant.const import UnitOfTime
 from homeassistant.const import UnitOfVolume
+from homeassistant.core import callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import DiscoveryInfoType
 
@@ -162,10 +164,15 @@ MONITOR_OPTIONS_SCHEMA = vol.Schema(
 
 MONITORS_OPTIONS_SCHEMA = vol.All(cv.ensure_list, [MONITOR_OPTIONS_SCHEMA])
 
-CONFIG_ENTRY_OPTIONS_SCHEMA = vol.Schema(
+GLOBAL_OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_SEND_PACKET_DELAY, default=False): bool,
+    }
+)
+
+CONFIG_ENTRY_OPTIONS_SCHEMA = GLOBAL_OPTIONS_SCHEMA.extend(
     {
         vol.Optional(CONF_MONITORS, default=[]): MONITORS_OPTIONS_SCHEMA,
-        vol.Optional(CONF_SEND_PACKET_DELAY, default=False): bool,
     }
 )
 
@@ -174,6 +181,14 @@ class BrultechConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for brultech."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Create the options flow."""
+        return BrultechOptionsFlow(config_entry)
 
     async def async_step_import(
         self, discovery_info: DiscoveryInfoType
@@ -373,3 +388,67 @@ def yaml_to_config_entry(
     )
 
     return data, options
+
+
+class BrultechOptionsFlow(config_entries.OptionsFlow):
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> data_entry_flow.FlowResult:
+        """Manage the options."""
+        return self.async_show_menu(
+            step_id="options_menu",
+            menu_options=["global_options", "choose_monitor"],
+        )
+
+    async def async_step_global_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> data_entry_flow.FlowResult:
+        if user_input is not None:
+            options = deepcopy(self.config_entry.options)
+            options[CONF_SEND_PACKET_DELAY] = user_input[CONF_SEND_PACKET_DELAY]
+            return self.async_create_entry(title="", data=options)
+
+        return self.async_show_form(
+            step_id="global_options",
+            data_schema=GLOBAL_OPTIONS_SCHEMA,
+        )
+
+    async def async_step_choose_monitor(
+        self, user_input: dict[str, Any] | None = None
+    ) -> data_entry_flow.FlowResult:
+        if user_input is not None:
+            self._serial_number = user_input[CONF_SERIAL_NUMBER]
+            return await self.async_step_choose_pulse_counter(self, None)
+
+        serial_numbers = [
+            str(monitor[CONF_SERIAL_NUMBER])
+            for monitor in self.config_entry.options[CONF_MONITORS]
+        ]
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_SERIAL_NUMBER): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=serial_numbers,
+                        multiple=False,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            }
+        )
+
+        return self.async_show_form(
+            step_id="choose_monitor",
+            data_schema=schema,
+        )
+
+    async def async_step_per_monitor_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> data_entry_flow.FlowResult:
+        return self.async_show_form(
+            step_id="per_monitor_options", data_schema=MONITOR_OPTIONS_SCHEMA
+        )
