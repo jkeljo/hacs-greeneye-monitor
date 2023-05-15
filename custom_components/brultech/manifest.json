@@ -1,11 +1,12 @@
 {
-  "domain": "greeneye_monitor",
-  "name": "GreenEye Monitor (GEM)",
+  "domain": "brultech",
+  "name": "Brultech",
   "codeowners": ["@jkeljo"],
+  "config_flow": true,
   "documentation": "https://github.com/jkeljo/hacs-greeneye-monitor",
   "integration_type": "hub",
   "iot_class": "local_push",
-  "loggers": ["greeneye"],
+  "loggers": ["brultech"],
   "requirements": ["greeneye_monitor==3.0.3"],
   "version": "2023.03.30"
 }

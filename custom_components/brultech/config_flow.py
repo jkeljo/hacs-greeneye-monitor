@@ -1,4 +1,4 @@
-"""Config flows for greeneye_monitor."""
+"""Config flows for brultech."""
 from copy import deepcopy
 from typing import Tuple
 
@@ -170,8 +170,8 @@ CONFIG_ENTRY_OPTIONS_SCHEMA = vol.Schema(
 )
 
 
-class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Config flow for greeneye_monitor."""
+class BrultechConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Config flow for brultech."""
 
     VERSION = 1
 

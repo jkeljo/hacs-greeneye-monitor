@@ -1,0 +1,47 @@
+{
+  "config": {
+    "flow_title": "{device_name}",
+    "abort": {
+      "already_configured": "Brultech integration is already configured",
+      "success": "Configured energy monitor {serial_number}. The sensors that are frequently updated (such as the power, temperature, and pulse rate sensors) are disabled by default; you can enable them from entity settings."
+    },
+    "step": {
+      "user": {
+        "title": "Choose port",
+        "description": "Specify the port to which the monitor will send data packets. This should match the port specified in the monitor's Network settings.",
+        "data": {
+          "port": "Port"
+        }
+      },
+      "integration_discovery": {
+        "title": "Configure new monitor",
+        "data": {
+          "temperature_unit": "Temperature unit",
+          "net_metering": "Channels with net metering"
+        },
+        "data_description": {
+          "temperature_unit": "What unit of temperature is the monitor configured to use? Find this in the 'Temp Degree' section of the GEM UI. Note: this might be different from what Home Assistant is configured to use.",
+          "net_metering": "Which channels in the monitor are configured for net metering? For GEM, find this in the 'Chan CT' section of the GEM UI."
+        }
+      },
+      "pulse_counter": {
+        "title": "Configure pulse counter",
+        "description": "Specify what pulse counter {pulse_counter_number} is measuring.",
+        "data": {
+          "counted_quantity": "What unit is the pulse counter counting?",
+          "counted_quantity_per_pulse": "How many of that unit does each pulse represent?",
+          "device_class": "Device class"
+        },
+        "data_description": {
+          "device_class": "What device class should the entity representing this pulse counter be? Required for use with the energy dashboard."
+        }
+      }
+    }
+  },
+  "issues": {
+    "remove_yaml": {
+      "title": "Brultech no longer uses YAML configuration",
+      "description": "Brultech is now configured via the UI.\n\nYour existing YAML configuration has been imported and is no longer necessary.\n\nRemove the greeneye_monitor section of configuration.yaml and restart Home Assistant to fix this issue."
+    }
+  }
+}

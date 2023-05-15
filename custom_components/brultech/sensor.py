@@ -1,4 +1,4 @@
-"""Support for the sensors in a GreenEye Monitor."""
+"""Support for the sensors in a Brultech energy monitor."""
 from __future__ import annotations
 
 import logging
@@ -33,7 +33,6 @@ from .const import CONF_NUMBER
 from .const import CONF_PULSE_COUNTERS
 from .const import CONF_SERIAL_NUMBER
 from .const import CONF_TIME_UNIT
-from .const import DATA_GREENEYE_MONITOR
 from .const import DEFAULT_UPDATE_INTERVAL
 from .const import DEVICE_TYPE_CURRENT_TRANSFORMER
 from .const import DEVICE_TYPE_PULSE_COUNTER
@@ -56,7 +55,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> bool:
-    """Set up GEM sensors from the config entry"""
+    """Set up Brultech energy monitor sensors from the config entry"""
     entry_id = config_entry.entry_id
 
     async def on_new_monitor(monitor: greeneye.monitor.Monitor) -> None:
@@ -81,7 +80,7 @@ async def async_setup_entry(
         )
 
         if monitor_config is not None and monitor_option is not None:
-            entities: list[GEMSensor] = []
+            entities: list[MonitorSensor] = []
 
             device_registry = dr.async_get(hass)
             monitor_type_short_name = get_monitor_type_short_name(monitor)
@@ -182,7 +181,7 @@ async def async_setup_entry(
                 },
             )
 
-    monitors: greeneye.Monitors = hass.data[DATA_GREENEYE_MONITOR]
+    monitors: greeneye.Monitors = hass.data[DOMAIN]
     monitors.add_listener(on_new_monitor)
     for monitor in monitors.monitors.values():
         await on_new_monitor(monitor)
@@ -198,8 +197,8 @@ UnderlyingSensorType = (
 )
 
 
-class GEMSensor(SensorEntity):
-    """Base class for GreenEye Monitor sensors."""
+class MonitorSensor(SensorEntity):
+    """Base class for Brultech energy monitor sensors."""
 
     _attr_entity_registry_enabled_default = False
     _attr_has_entity_name = True
@@ -256,7 +255,7 @@ class GEMSensor(SensorEntity):
             self._sensor.remove_listener(self._update)
 
 
-class PowerSensor(GEMSensor):
+class PowerSensor(MonitorSensor):
     """Entity showing power usage on one channel of the monitor."""
 
     _attr_native_unit_of_measurement = UnitOfPower.WATT
@@ -292,7 +291,7 @@ class PowerSensor(GEMSensor):
         return {DATA_WATT_SECONDS: watt_seconds}
 
 
-class CurrentSensor(GEMSensor):
+class CurrentSensor(MonitorSensor):
     """Entity showing current on one channel of the monitor."""
 
     _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
@@ -317,7 +316,7 @@ class CurrentSensor(GEMSensor):
         return self._sensor.amps
 
 
-class EnergySensor(GEMSensor):
+class EnergySensor(MonitorSensor):
     """Entity showing energy usage on one channel of the monitor."""
 
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
@@ -353,7 +352,7 @@ class EnergySensor(GEMSensor):
             return self._sensor.absolute_kilowatt_hours
 
 
-class PulseRateSensor(GEMSensor):
+class PulseRateSensor(MonitorSensor):
     """Entity showing rate of change in one pulse counter of the monitor."""
 
     _attr_icon = COUNTER_ICON
@@ -412,7 +411,7 @@ class PulseRateSensor(GEMSensor):
         return {DATA_PULSES: self._sensor.pulses}
 
 
-class PulseCountSensor(GEMSensor):
+class PulseCountSensor(MonitorSensor):
     """Entity showing pulse counts."""
 
     _attr_entity_registry_enabled_default = True
@@ -448,7 +447,7 @@ class PulseCountSensor(GEMSensor):
         return self._sensor.pulses * self._counted_quantity_per_pulse
 
 
-class TemperatureSensor(GEMSensor):
+class TemperatureSensor(MonitorSensor):
     """Entity showing temperature from one temperature sensor."""
 
     _attr_device_class = SensorDeviceClass.TEMPERATURE
@@ -473,7 +472,7 @@ class TemperatureSensor(GEMSensor):
         return self._sensor.temperature
 
 
-class VoltageSensor(GEMSensor):
+class VoltageSensor(MonitorSensor):
     """Entity showing voltage."""
 
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT

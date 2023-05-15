@@ -1,15 +1,15 @@
-"""Tests for greeneye_monitor component initialization."""
+"""Tests for brultech component initialization."""
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
 from unittest.mock import patch
 
-from custom_components.greeneye_monitor import CONF_MONITORS
+from custom_components.brultech.config_flow import CONFIG_ENTRY_DATA_SCHEMA
+from custom_components.brultech.config_flow import CONFIG_ENTRY_OPTIONS_SCHEMA
+from custom_components.brultech.config_flow import yaml_to_config_entry
+from custom_components.brultech.const import CONF_MONITORS
+from custom_components.brultech.const import DOMAIN
 from custom_components.greeneye_monitor import CONFIG_SCHEMA
-from custom_components.greeneye_monitor import DOMAIN
-from custom_components.greeneye_monitor.config_flow import CONFIG_ENTRY_DATA_SCHEMA
-from custom_components.greeneye_monitor.config_flow import CONFIG_ENTRY_OPTIONS_SCHEMA
-from custom_components.greeneye_monitor.config_flow import yaml_to_config_entry
 from homeassistant.const import CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
@@ -19,7 +19,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .common import connect_monitor
 from .common import MULTI_MONITOR_CONFIG
-from .common import setup_greeneye_monitor_component_with_config
+from .common import setup_brultech_component_with_config
 from .common import SINGLE_MONITOR_CONFIG_POWER_SENSORS
 from .common import SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
 from .common import SINGLE_MONITOR_CONFIG_TEMPERATURE_SENSORS
@@ -45,7 +45,7 @@ async def test_setup_creates_config_entry(
     monitors: AsyncMock,
 ) -> None:
     """Test that component setup copies the YAML configuration into a config entry."""
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
     )
 
@@ -108,7 +108,7 @@ async def test_setup_gets_updates_from_yaml(
     with patch("homeassistant.config_entries.ConfigEntries.async_setup"):
         await hass.config_entries.async_add(config_entry)
 
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
@@ -136,7 +136,7 @@ async def test_previous_names_remain(hass: HomeAssistant, monitors: AsyncMock) -
         },
     )
 
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
@@ -156,7 +156,7 @@ async def test_setup_creates_temperature_entities(
     hass: HomeAssistant, monitors: AsyncMock
 ) -> None:
     """Test that component setup registers temperature sensors properly."""
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_TEMPERATURE_SENSORS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
@@ -214,7 +214,7 @@ async def test_setup_creates_pulse_counter_entities(
     hass: HomeAssistant, monitors: AsyncMock
 ) -> None:
     """Test that component setup registers pulse counters properly."""
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
@@ -256,7 +256,7 @@ async def test_setup_creates_power_sensor_entities(
     hass: HomeAssistant, monitors: AsyncMock
 ) -> None:
     """Test that component setup registers power sensors correctly."""
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_POWER_SENSORS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
@@ -278,7 +278,7 @@ async def test_setup_creates_energy_sensor_entities(
     hass: HomeAssistant, monitors: AsyncMock
 ) -> None:
     """Test that component setup registers power sensors correctly."""
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_POWER_SENSORS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
@@ -300,7 +300,7 @@ async def test_setup_creates_current_sensor_entities(
     hass: HomeAssistant, monitors: AsyncMock
 ) -> None:
     """Test that component setup registers power sensors correctly."""
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_POWER_SENSORS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
@@ -322,7 +322,7 @@ async def test_setup_creates_voltage_sensor_entities(
     hass: HomeAssistant, monitors: AsyncMock
 ) -> None:
     """Test that component setup registers voltage sensors properly."""
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
@@ -336,7 +336,7 @@ async def test_setup_creates_voltage_sensor_entities(
 
 async def test_multi_monitor_config(hass: HomeAssistant, monitors: AsyncMock) -> None:
     """Test that component setup registers entities from multiple monitors correctly."""
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass,
         MULTI_MONITOR_CONFIG,
     )
@@ -354,7 +354,7 @@ async def test_setup_and_shutdown(hass: HomeAssistant, monitors: AsyncMock) -> N
     """Test that the component can set up and shut down cleanly, closing the underlying server on shutdown."""
     monitors.start_server = AsyncMock(return_value=None)
     monitors.close = AsyncMock(return_value=None)
-    assert await setup_greeneye_monitor_component_with_config(
+    assert await setup_brultech_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_POWER_SENSORS
     )
 

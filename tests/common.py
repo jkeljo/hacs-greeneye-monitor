@@ -1,4 +1,4 @@
-"""Common helpers for greeneye_monitor tests."""
+"""Common helpers for brultech tests."""
 from __future__ import annotations
 
 import inspect
@@ -6,18 +6,19 @@ from typing import Any
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 
-from custom_components.greeneye_monitor import CONF_CHANNELS
-from custom_components.greeneye_monitor import CONF_COUNTED_QUANTITY
-from custom_components.greeneye_monitor import CONF_COUNTED_QUANTITY_PER_PULSE
-from custom_components.greeneye_monitor import CONF_MONITORS
-from custom_components.greeneye_monitor import CONF_NET_METERING
-from custom_components.greeneye_monitor import CONF_NUMBER
-from custom_components.greeneye_monitor import CONF_PULSE_COUNTERS
-from custom_components.greeneye_monitor import CONF_SERIAL_NUMBER
-from custom_components.greeneye_monitor import CONF_TEMPERATURE_SENSORS
-from custom_components.greeneye_monitor import CONF_TIME_UNIT
-from custom_components.greeneye_monitor import CONF_VOLTAGE_SENSORS
-from custom_components.greeneye_monitor import DOMAIN
+from custom_components.brultech.const import CONF_CHANNELS
+from custom_components.brultech.const import CONF_COUNTED_QUANTITY
+from custom_components.brultech.const import CONF_COUNTED_QUANTITY_PER_PULSE
+from custom_components.brultech.const import CONF_MONITORS
+from custom_components.brultech.const import CONF_NET_METERING
+from custom_components.brultech.const import CONF_NUMBER
+from custom_components.brultech.const import CONF_PULSE_COUNTERS
+from custom_components.brultech.const import CONF_SERIAL_NUMBER
+from custom_components.brultech.const import CONF_TEMPERATURE_SENSORS
+from custom_components.brultech.const import CONF_TIME_UNIT
+from custom_components.brultech.const import CONF_VOLTAGE_SENSORS
+from custom_components.brultech.const import DOMAIN
+from greeneye.monitor import MonitorType
 from homeassistant.const import CONF_NAME
 from homeassistant.const import CONF_PORT
 from homeassistant.const import CONF_SENSORS
@@ -156,10 +157,10 @@ MULTI_MONITOR_CONFIG = {
 }
 
 
-async def setup_greeneye_monitor_component_with_config(
+async def setup_brultech_component_with_config(
     hass: HomeAssistant, config: ConfigType
 ) -> bool:
-    """Set up the greeneye_monitor component with the given config. Return True if successful, False otherwise."""
+    """Set up the brultech component with the given config. Return True if successful, False otherwise."""
     result = await async_setup_component(
         hass,
         DOMAIN,
@@ -171,21 +172,21 @@ async def setup_greeneye_monitor_component_with_config(
 
 
 def mock_with_listeners() -> MagicMock:
-    """Create a MagicMock with methods that follow the same pattern for working with listeners in the greeneye_monitor API."""
+    """Create a MagicMock with methods that follow the same pattern for working with listeners in the brultech API."""
     mock = MagicMock()
     add_listeners(mock)
     return mock
 
 
 def async_mock_with_listeners() -> AsyncMock:
-    """Create an AsyncMock with methods that follow the same pattern for working with listeners in the greeneye_monitor API."""
+    """Create an AsyncMock with methods that follow the same pattern for working with listeners in the brultech API."""
     mock = AsyncMock()
     add_listeners(mock)
     return mock
 
 
 def add_listeners(mock: MagicMock | AsyncMock) -> None:
-    """Add add_listener and remove_listener methods to the given mock that behave like their counterparts on objects from the greeneye_monitor API, plus a notify_all_listeners method that calls all registered listeners."""
+    """Add add_listener and remove_listener methods to the given mock that behave like their counterparts on objects from the brultech API, plus a notify_all_listeners method that calls all registered listeners."""
     mock.listeners = []
     mock.add_listener = mock.listeners.append
     mock.remove_listener = mock.listeners.remove
@@ -241,6 +242,7 @@ def mock_monitor(serial_number: int) -> MagicMock:
     monitor.pulse_counters = [mock_pulse_counter(i) for i in range(0, 4)]
     monitor.temperature_sensors = [mock_temperature_sensor(i) for i in range(0, 8)]
     monitor.channels = [mock_channel(i) for i in range(0, 32)]
+    monitor.type = MonitorType.GEM
     return monitor
 
 

@@ -1,12 +1,12 @@
-"""Common fixtures for testing greeneye_monitor."""
+"""Common fixtures for testing brultech."""
 from typing import Any
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-from custom_components.greeneye_monitor import DOMAIN
-from custom_components.greeneye_monitor.sensor import GEMSensor
+from custom_components.brultech import DOMAIN
+from custom_components.brultech.sensor import MonitorSensor
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import UnitOfElectricCurrent
 from homeassistant.const import UnitOfElectricPotential
@@ -32,7 +32,7 @@ def auto_enable_custom_integrations(hass, enable_custom_integrations):
 
 @pytest.fixture(autouse=True)
 def enable_all_entities(monkeypatch):
-    monkeypatch.setattr(GEMSensor, "_attr_entity_registry_enabled_default", True)
+    monkeypatch.setattr(MonitorSensor, "_attr_entity_registry_enabled_default", True)
 
 
 def assert_sensor_state(
