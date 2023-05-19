@@ -158,7 +158,7 @@ PULSE_COUNTERS_OPTIONS_SCHEMA = vol.All(cv.ensure_list, [PULSE_COUNTER_OPTIONS_S
 MONITOR_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_SERIAL_NUMBER): cv.positive_int,
-        vol.Optional(CONF_PULSE_COUNTERS, default={}): PULSE_COUNTERS_OPTIONS_SCHEMA,
+        vol.Optional(CONF_PULSE_COUNTERS, default=[]): PULSE_COUNTERS_OPTIONS_SCHEMA,
     }
 )
 

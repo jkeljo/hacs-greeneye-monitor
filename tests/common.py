@@ -18,6 +18,7 @@ from custom_components.brultech.const import CONF_TEMPERATURE_SENSORS
 from custom_components.brultech.const import CONF_TIME_UNIT
 from custom_components.brultech.const import CONF_VOLTAGE_SENSORS
 from custom_components.brultech.const import DOMAIN
+from custom_components.greeneye_monitor.const import DOMAIN as GREENEYE_MONITOR_DOMAIN
 from greeneye.monitor import MonitorType
 from homeassistant.const import CONF_NAME
 from homeassistant.const import CONF_PORT
@@ -33,7 +34,7 @@ SINGLE_MONITOR_SERIAL_NUMBER = 110011
 def make_single_monitor_config_with_sensors(sensors: dict[str, Any]) -> dict[str, Any]:
     """Wrap the given sensor config in the boilerplate for a single monitor with serial number SINGLE_MONITOR_SERIAL_NUMBER."""
     return {
-        DOMAIN: {
+        GREENEYE_MONITOR_DOMAIN: {
             CONF_PORT: 7513,
             CONF_MONITORS: [
                 {
@@ -128,7 +129,7 @@ SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS = make_single_monitor_config_with_sensors(
 )
 
 MULTI_MONITOR_CONFIG = {
-    DOMAIN: {
+    GREENEYE_MONITOR_DOMAIN: {
         CONF_PORT: 7513,
         CONF_MONITORS: [
             {
@@ -157,15 +158,17 @@ MULTI_MONITOR_CONFIG = {
 }
 
 
-async def setup_brultech_component_with_config(
+async def setup_greeneye_monitor_component_with_config(
     hass: HomeAssistant, config: ConfigType
 ) -> bool:
-    """Set up the brultech component with the given config. Return True if successful, False otherwise."""
+    """Set up the greeneye_monitor component with the given config. Return True if successful, False otherwise."""
     result = await async_setup_component(
         hass,
-        DOMAIN,
+        GREENEYE_MONITOR_DOMAIN,
         config,
     )
+    if result:
+        result = await async_setup_component(hass, DOMAIN, {})
     await hass.async_block_till_done()
 
     return result
