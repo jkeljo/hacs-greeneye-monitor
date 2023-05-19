@@ -197,6 +197,25 @@ class BrultechConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data, options = yaml_to_config_entry(discovery_info)
 
         if entry := await self.async_set_unique_id(DOMAIN):
+            yaml_serial_numbers = set(
+                [monitor[CONF_SERIAL_NUMBER] for monitor in data[CONF_MONITORS]]
+            )
+
+            data[CONF_MONITORS].extend(
+                [
+                    monitor
+                    for monitor in entry.data[CONF_MONITORS]
+                    if monitor[CONF_SERIAL_NUMBER] not in yaml_serial_numbers
+                ]
+            )
+            options[CONF_MONITORS].extend(
+                [
+                    monitor
+                    for monitor in entry.options[CONF_MONITORS]
+                    if monitor[CONF_SERIAL_NUMBER] not in yaml_serial_numbers
+                ]
+            )
+
             self.hass.config_entries.async_update_entry(
                 entry, data=data, options=options
             )

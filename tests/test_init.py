@@ -101,6 +101,15 @@ async def test_setup_gets_updates_from_yaml(
     """Test that component setup updates the existing config entry when YAML changes."""
     normalized_schema = CONFIG_SCHEMA(SINGLE_MONITOR_CONFIG_TEMPERATURE_SENSORS)
     data, options = yaml_to_config_entry(normalized_schema[GREENEYE_MONITOR_DOMAIN])
+
+    # Add multiple monitors on top of the single monitor so that the config entry
+    # has 4 monitors in it
+    multi_data, multi_options = yaml_to_config_entry(
+        CONFIG_SCHEMA(MULTI_MONITOR_CONFIG)[GREENEYE_MONITOR_DOMAIN]
+    )
+    data[CONF_MONITORS].extend(multi_data[CONF_MONITORS])
+    options[CONF_MONITORS].extend(multi_options[CONF_MONITORS])
+
     config_entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id=DOMAIN,
@@ -114,10 +123,15 @@ async def test_setup_gets_updates_from_yaml(
     with patch("homeassistant.config_entries.ConfigEntries.async_setup"):
         await hass.config_entries.async_add(config_entry)
 
+    # Set up using the single monitor config. This simulates one monitor
+    # coming from YAML and the others coming from UI config.
     assert await setup_greeneye_monitor_component_with_config(
         hass, SINGLE_MONITOR_CONFIG_PULSE_COUNTERS
     )
     await connect_monitor(hass, monitors, SINGLE_MONITOR_SERIAL_NUMBER)
+    await connect_monitor(hass, monitors, 1)
+    await connect_monitor(hass, monitors, 2)
+    await connect_monitor(hass, monitors, 3)
 
     assert_pulse_counter_registered(
         hass,
@@ -127,6 +141,11 @@ async def test_setup_gets_updates_from_yaml(
         "gal",
         "h",
     )
+
+    # Make sure native config entries are still present
+    assert_temperature_sensor_registered(hass, 1, 1, "GEM 1 temperature 1")
+    assert_temperature_sensor_registered(hass, 2, 1, "GEM 2 temperature 1")
+    assert_temperature_sensor_registered(hass, 3, 1, "GEM 3 temperature 1")
 
 
 async def test_previous_names_remain(hass: HomeAssistant, monitors: AsyncMock) -> None:
