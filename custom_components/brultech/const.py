@@ -1,8 +1,10 @@
 """Constants for the brultech component."""
 from datetime import timedelta
+from typing import cast
 
 from greeneye.monitor import Monitor
 from greeneye.monitor import MonitorType
+from homeassistant.helpers.entity import DeviceInfo
 
 CONF_CHANNELS = "channels"
 CONF_COUNTED_QUANTITY = "counted_quantity"
@@ -47,3 +49,20 @@ def get_monitor_type_long_name(monitor: Monitor) -> str:
         return "ECM-1220/1240"
     else:
         assert False
+
+
+def make_device_info(monitor: Monitor, device_type: str, number: int) -> DeviceInfo:
+    monitor_type_short_name = get_monitor_type_short_name(monitor)
+    return DeviceInfo(
+        identifiers={
+            (
+                DOMAIN,
+                cast(
+                    str,
+                    f"{monitor.serial_number}-{device_type}-{number + 1}",
+                ),
+            )
+        },
+        name=f"{monitor_type_short_name} {monitor.serial_number} {device_type} {number + 1}",
+        via_device=(DOMAIN, f"{monitor.serial_number}"),
+    )

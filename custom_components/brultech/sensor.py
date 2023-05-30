@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 from typing import Any
-from typing import cast
 
 import greeneye
 from homeassistant.components.sensor import SensorDeviceClass
@@ -21,6 +20,7 @@ from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import Throttle
 
@@ -41,6 +41,7 @@ from .const import DEVICE_TYPE_VOLTAGE_SENSOR
 from .const import DOMAIN
 from .const import get_monitor_type_long_name
 from .const import get_monitor_type_short_name
+from .const import make_device_info
 
 DATA_PULSES = "pulses"
 DATA_WATT_SECONDS = "watt_seconds"
@@ -80,7 +81,7 @@ async def async_setup_entry(
         )
 
         if monitor_config is not None and monitor_option is not None:
-            entities: list[MonitorSensor] = []
+            entities: list[Entity] = []
 
             device_registry = dr.async_get(hass)
             monitor_type_short_name = get_monitor_type_short_name(monitor)
@@ -170,7 +171,7 @@ async def async_setup_entry(
 
             async_add_entities(entities)
 
-            _LOGGER.info("Set up new monitor %d", monitor.serial_number)
+            _LOGGER.info("Set up sensors for new monitor %d", monitor.serial_number)
         else:
             _LOGGER.info("Triggering config flow for %d", monitor.serial_number)
             await hass.config_entries.flow.async_init(
@@ -230,20 +231,7 @@ class MonitorSensor(SensorEntity):
 
     @property
     def device_info(self) -> DeviceInfo | None:
-        monitor_type_short_name = get_monitor_type_short_name(self._monitor)
-        return DeviceInfo(
-            identifiers={
-                (
-                    DOMAIN,
-                    cast(
-                        str,
-                        f"{self._monitor_serial_number}-{self._device_type}-{self._number + 1}",
-                    ),
-                )
-            },
-            name=f"{monitor_type_short_name} {self._monitor_serial_number} {self._device_type} {self._number + 1}",
-            via_device=(DOMAIN, f"{self._monitor.serial_number}"),
-        )
+        return make_device_info(self._monitor, self._device_type, self._number)
 
     async def async_added_to_hass(self) -> None:
         """Wait for and connect to the sensor."""

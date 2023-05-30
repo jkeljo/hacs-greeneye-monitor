@@ -34,7 +34,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, close_monitors)
 
     hass.async_create_task(
-        hass.config_entries.async_forward_entry_setups(config_entry, [Platform.SENSOR])
+        hass.config_entries.async_forward_entry_setups(
+            config_entry, [Platform.SENSOR, Platform.NUMBER]
+        )
     )
 
     return True
@@ -42,7 +44,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Unload the Brultech config entry."""
-    await hass.config_entries.async_forward_entry_unload(config_entry, Platform.SENSOR)
+    await hass.config_entries.async_unload_platforms(
+        config_entry, [Platform.NUMBER, Platform.SENSOR]
+    )
 
     monitors = hass.data.pop(DOMAIN)
     await monitors.close()
