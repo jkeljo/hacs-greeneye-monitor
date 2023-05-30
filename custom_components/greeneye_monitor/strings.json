@@ -1,8 +1,111 @@
 {
+  "config": {
+    "flow_title": "{device_name}",
+    "abort": {
+      "already_configured": "GreenEye Monitor integration is already configured",
+      "success": "Configured energy monitor {serial_number}. The sensors that are frequently updated (such as the power, temperature, and pulse rate sensors) are disabled by default; you can enable them from entity settings."
+    },
+    "step": {
+      "user": {
+        "title": "Choose port",
+        "description": "Specify the port to which the monitor will send data packets. This should match the port specified in the monitor's Network settings.",
+        "data": {
+          "port": "Port"
+        }
+      },
+      "integration_discovery": {
+        "title": "Configure new monitor",
+        "data": {
+          "aux5_type": "Aux 5 mode",
+          "temperature_unit": "Temperature unit",
+          "net_metering": "Channels with net metering"
+        },
+        "data_description": {
+          "aux5_type": "Is Aux 5 measuring current or counting pulses?",
+          "temperature_unit": "What unit of temperature is the monitor configured to use? Find this in the 'Temp Degree' section of the GEM UI. Note: this might be different from what Home Assistant is configured to use.",
+          "net_metering": "Which channels in the monitor are configured for net metering? For GEM, find this in the 'Chan CT' section of the GEM UI."
+        }
+      },
+      "pulse_counter": {
+        "title": "Configure pulse counter",
+        "description": "Specify what pulse counter {pulse_counter_number} is measuring.",
+        "data": {
+          "counted_quantity": "What unit is the pulse counter counting?",
+          "counted_quantity_per_pulse": "How many of that unit does each pulse represent?",
+          "device_class": "Device class"
+        },
+        "data_description": {
+          "device_class": "What device class should the entity representing this pulse counter be? Required for use with the energy dashboard."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "options_menu": {
+        "title": "Choose options to edit",
+        "menu_options": {
+          "global_options": "Edit global options",
+          "choose_monitor": "Edit per-monitor options"
+        }
+      },
+      "global_options": {
+        "title": "Global options",
+        "data": {
+          "send_packet_delay": "Request packet delay for GEM API calls"
+        },
+        "data_description": {
+          "send_packet_delay": "Experimental. Leave it False unless a @jkeljo has told you to set it to True."
+        }
+      },
+      "choose_monitor": {
+        "title": "Choose monitor",
+        "data": {
+          "serial_number": "Serial number"
+        },
+        "data_description": {
+          "serial_number": "Select the serial number of a monitor to edit its options."
+        }
+      },
+      "choose_pulse_counter": {
+        "title": "Monitor {serial_number}",
+        "data": {
+          "number": "Pulse counter number"
+        },
+        "data_description": {
+          "number": "Select a pulse counter to edit its options"
+        }
+      },
+      "pulse_counter_options": {
+        "title": "Pulse counter {pulse_counter_number}",
+        "data": {
+          "time_unit": "Rate sensor time interval"
+        },
+        "data_description": {
+          "time_unit": "Select the time interval for reporting pulse rates."
+        }
+      }
+    }
+  },
+  "selector": {
+    "aux5_type": {
+      "options": {
+        "ct": "Measuring current",
+        "pulse_counter": "Counting pulses"
+      }
+    },
+    "time_unit": {
+      "options": {
+        "s": "per second",
+        "min": "per minute",
+        "h": "per hour"
+      }
+    }
+  },
   "issues": {
     "remove_yaml": {
-      "title": "Brultech no longer uses YAML configuration",
-      "description": "Brultech is now configured via the UI.\n\nYour existing YAML configuration has been imported and is no longer necessary.\n\nRemove the greeneye_monitor section of configuration.yaml and restart Home Assistant to fix this issue."
+      "title": "GreenEye Monitor no longer uses YAML configuration",
+      "description": "Greeneye Monitor is now configured via the UI.\n\nYour existing YAML configuration has been imported and is no longer necessary.\n\nRemove the greeneye_monitor section of configuration.yaml and restart Home Assistant to fix this issue."
     }
   }
 }

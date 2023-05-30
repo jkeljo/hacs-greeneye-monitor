@@ -6,5 +6,6 @@
   "integration_type": "hub",
   "iot_class": "local_push",
   "loggers": ["greeneye"],
-  "version": "2023.03.30"
+  "requirements": ["greeneye_monitor==4.0"],
+  "version": "2023.05.30"
 }

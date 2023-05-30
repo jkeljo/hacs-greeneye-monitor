@@ -1,12 +1,12 @@
-"""Common fixtures for testing brultech."""
+"""Common fixtures for testing greeneye_monitor."""
 from typing import Any
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-from custom_components.brultech import DOMAIN
-from custom_components.brultech.sensor import MonitorSensor
+from custom_components.greeneye_monitor import DOMAIN
+from custom_components.greeneye_monitor.sensor import MonitorSensor
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import UnitOfElectricCurrent
 from homeassistant.const import UnitOfElectricPotential

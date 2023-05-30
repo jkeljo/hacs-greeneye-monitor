@@ -1,4 +1,4 @@
-"""Common helpers for brultech tests."""
+"""Common helpers for greeneye_monitor tests."""
 from __future__ import annotations
 
 import inspect
@@ -6,19 +6,18 @@ from typing import Any
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 
-from custom_components.brultech.const import CONF_CHANNELS
-from custom_components.brultech.const import CONF_COUNTED_QUANTITY
-from custom_components.brultech.const import CONF_COUNTED_QUANTITY_PER_PULSE
-from custom_components.brultech.const import CONF_MONITORS
-from custom_components.brultech.const import CONF_NET_METERING
-from custom_components.brultech.const import CONF_NUMBER
-from custom_components.brultech.const import CONF_PULSE_COUNTERS
-from custom_components.brultech.const import CONF_SERIAL_NUMBER
-from custom_components.brultech.const import CONF_TEMPERATURE_SENSORS
-from custom_components.brultech.const import CONF_TIME_UNIT
-from custom_components.brultech.const import CONF_VOLTAGE_SENSORS
-from custom_components.brultech.const import DOMAIN
-from custom_components.greeneye_monitor.const import DOMAIN as GREENEYE_MONITOR_DOMAIN
+from custom_components.greeneye_monitor.const import CONF_CHANNELS
+from custom_components.greeneye_monitor.const import CONF_COUNTED_QUANTITY
+from custom_components.greeneye_monitor.const import CONF_COUNTED_QUANTITY_PER_PULSE
+from custom_components.greeneye_monitor.const import CONF_MONITORS
+from custom_components.greeneye_monitor.const import CONF_NET_METERING
+from custom_components.greeneye_monitor.const import CONF_NUMBER
+from custom_components.greeneye_monitor.const import CONF_PULSE_COUNTERS
+from custom_components.greeneye_monitor.const import CONF_SERIAL_NUMBER
+from custom_components.greeneye_monitor.const import CONF_TEMPERATURE_SENSORS
+from custom_components.greeneye_monitor.const import CONF_TIME_UNIT
+from custom_components.greeneye_monitor.const import CONF_VOLTAGE_SENSORS
+from custom_components.greeneye_monitor.const import DOMAIN
 from greeneye.monitor import MonitorType
 from homeassistant.const import CONF_NAME
 from homeassistant.const import CONF_PORT
@@ -34,7 +33,7 @@ SINGLE_MONITOR_SERIAL_NUMBER = 110011
 def make_single_monitor_config_with_sensors(sensors: dict[str, Any]) -> dict[str, Any]:
     """Wrap the given sensor config in the boilerplate for a single monitor with serial number SINGLE_MONITOR_SERIAL_NUMBER."""
     return {
-        GREENEYE_MONITOR_DOMAIN: {
+        DOMAIN: {
             CONF_PORT: 7513,
             CONF_MONITORS: [
                 {
@@ -129,7 +128,7 @@ SINGLE_MONITOR_CONFIG_VOLTAGE_SENSORS = make_single_monitor_config_with_sensors(
 )
 
 MULTI_MONITOR_CONFIG = {
-    GREENEYE_MONITOR_DOMAIN: {
+    DOMAIN: {
         CONF_PORT: 7513,
         CONF_MONITORS: [
             {
@@ -164,7 +163,7 @@ async def setup_greeneye_monitor_component_with_config(
     """Set up the greeneye_monitor component with the given config. Return True if successful, False otherwise."""
     result = await async_setup_component(
         hass,
-        GREENEYE_MONITOR_DOMAIN,
+        DOMAIN,
         config,
     )
     if result:
@@ -175,21 +174,21 @@ async def setup_greeneye_monitor_component_with_config(
 
 
 def mock_with_listeners() -> MagicMock:
-    """Create a MagicMock with methods that follow the same pattern for working with listeners in the brultech API."""
+    """Create a MagicMock with methods that follow the same pattern for working with listeners in the greeneye_monitor API."""
     mock = MagicMock()
     add_listeners(mock)
     return mock
 
 
 def async_mock_with_listeners() -> AsyncMock:
-    """Create an AsyncMock with methods that follow the same pattern for working with listeners in the brultech API."""
+    """Create an AsyncMock with methods that follow the same pattern for working with listeners in the greeneye_monitor API."""
     mock = AsyncMock()
     add_listeners(mock)
     return mock
 
 
 def add_listeners(mock: MagicMock | AsyncMock) -> None:
-    """Add add_listener and remove_listener methods to the given mock that behave like their counterparts on objects from the brultech API, plus a notify_all_listeners method that calls all registered listeners."""
+    """Add add_listener and remove_listener methods to the given mock that behave like their counterparts on objects from the greeneye_monitor API, plus a notify_all_listeners method that calls all registered listeners."""
     mock.listeners = []
     mock.add_listener = mock.listeners.append
     mock.remove_listener = mock.listeners.remove
@@ -207,6 +206,7 @@ def mock_pulse_counter(number: int) -> MagicMock:
     pulse_counter.number = number
     pulse_counter.pulses = 1000
     pulse_counter.pulses_per_second = 10
+    pulse_counter.is_aux = False
     return pulse_counter
 
 
@@ -234,6 +234,7 @@ def mock_channel(number: int) -> MagicMock:
     channel.absolute_kilowatt_hours = 42
     channel.polarized_kilowatt_hours = -50
     channel.watts = None
+    channel.is_aux = False
     return channel
 
 

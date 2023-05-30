@@ -1,9 +1,9 @@
-"""Tests for brultech sensors."""
+"""Tests for greeneye_monitor sensors."""
 from unittest.mock import AsyncMock
 
-from custom_components.brultech.const import DOMAIN
-from custom_components.brultech.sensor import DATA_PULSES
-from custom_components.brultech.sensor import DATA_WATT_SECONDS
+from custom_components.greeneye_monitor.const import DOMAIN
+from custom_components.greeneye_monitor.sensor import DATA_PULSES
+from custom_components.greeneye_monitor.sensor import DATA_WATT_SECONDS
 from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr

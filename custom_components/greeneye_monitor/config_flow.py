@@ -1,4 +1,4 @@
-"""Config flows for brultech."""
+"""Config flows for greeneye_monitor."""
 from copy import deepcopy
 from typing import Any
 from typing import Tuple
@@ -216,8 +216,8 @@ CONFIG_ENTRY_OPTIONS_SCHEMA = GLOBAL_OPTIONS_SCHEMA.extend(
 )
 
 
-class BrultechConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Config flow for brultech."""
+class GreeneyeMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Config flow for greeneye_monitor."""
 
     VERSION = 1
 
@@ -227,7 +227,7 @@ class BrultechConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
         """Create the options flow."""
-        return BrultechOptionsFlow(config_entry)
+        return GreeneyeMonitorOptionsFlow(config_entry)
 
     async def async_step_import(
         self, discovery_info: DiscoveryInfoType
@@ -465,7 +465,7 @@ def yaml_to_config_entry(
     return data, options
 
 
-class BrultechOptionsFlow(config_entries.OptionsFlow):
+class GreeneyeMonitorOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
         self.config_entry = config_entry

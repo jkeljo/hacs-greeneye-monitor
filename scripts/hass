@@ -3,5 +3,4 @@
 cd "$(dirname "$0")/.."
 
 cp custom_components/greeneye_monitor/strings.json custom_components/greeneye_monitor/translations/en.json
-cp custom_components/brultech/strings.json custom_components/brultech/translations/en.json
 hass -c . --debug

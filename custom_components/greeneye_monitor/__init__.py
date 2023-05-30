@@ -3,15 +3,19 @@ from __future__ import annotations
 
 import logging
 
-import custom_components.brultech as brultech
+import greeneye
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import CONF_NAME
 from homeassistant.const import CONF_PORT
 from homeassistant.const import CONF_SENSORS
 from homeassistant.const import CONF_TEMPERATURE_UNIT
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import Platform
 from homeassistant.const import UnitOfTime
+from homeassistant.core import Event
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.issue_registry import IssueSeverity
@@ -26,6 +30,7 @@ from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
 from .const import CONF_NUMBER
 from .const import CONF_PULSE_COUNTERS
+from .const import CONF_SEND_PACKET_DELAY
 from .const import CONF_SERIAL_NUMBER
 from .const import CONF_TEMPERATURE_SENSORS
 from .const import CONF_TIME_UNIT
@@ -121,8 +126,50 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
         hass.async_create_task(
             hass.config_entries.flow.async_init(
-                brultech.DOMAIN, context={"source": SOURCE_IMPORT}, data=server_config
+                DOMAIN, context={"source": SOURCE_IMPORT}, data=server_config
             )
         )
 
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Setup the GreenEye Monitor component from a config entry."""
+    send_packet_delay = config_entry.options[CONF_SEND_PACKET_DELAY]
+    monitors = greeneye.Monitors(send_packet_delay=send_packet_delay)
+    hass.data[DOMAIN] = monitors
+
+    await monitors.start_server(config_entry.data[CONF_PORT])
+
+    async def close_monitors(event: Event) -> None:
+        """Close the Monitors object."""
+        monitors = hass.data.pop(DOMAIN, None)
+        if monitors:
+            await monitors.close()
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, close_monitors)
+
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setups(
+            config_entry, [Platform.SENSOR, Platform.NUMBER]
+        )
+    )
+
+    config_entry.async_on_unload(config_entry.add_update_listener(reload_entry))
+
+    return True
+
+
+async def reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+    await hass.config_entries.async_reload(config_entry.entry_id)
+
+
+async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Unload the GreenEye Monitor config entry."""
+    await hass.config_entries.async_unload_platforms(
+        config_entry, [Platform.NUMBER, Platform.SENSOR]
+    )
+
+    monitors = hass.data.pop(DOMAIN)
+    await monitors.close()
     return True

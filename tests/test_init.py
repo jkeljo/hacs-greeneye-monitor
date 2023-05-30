@@ -1,17 +1,17 @@
-"""Tests for brultech component initialization."""
+"""Tests for greeneye_monitor component initialization."""
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
 from unittest.mock import patch
 
-from custom_components.brultech.config_flow import CONFIG_ENTRY_DATA_SCHEMA
-from custom_components.brultech.config_flow import CONFIG_ENTRY_OPTIONS_SCHEMA
-from custom_components.brultech.config_flow import yaml_to_config_entry
-from custom_components.brultech.const import CONF_MONITORS
-from custom_components.brultech.const import CONF_SERIAL_NUMBER
-from custom_components.brultech.const import DOMAIN
 from custom_components.greeneye_monitor import CONFIG_SCHEMA
 from custom_components.greeneye_monitor import DOMAIN as GREENEYE_MONITOR_DOMAIN
+from custom_components.greeneye_monitor.config_flow import CONFIG_ENTRY_DATA_SCHEMA
+from custom_components.greeneye_monitor.config_flow import CONFIG_ENTRY_OPTIONS_SCHEMA
+from custom_components.greeneye_monitor.config_flow import yaml_to_config_entry
+from custom_components.greeneye_monitor.const import CONF_MONITORS
+from custom_components.greeneye_monitor.const import CONF_SERIAL_NUMBER
+from custom_components.greeneye_monitor.const import DOMAIN
 from homeassistant.const import CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
