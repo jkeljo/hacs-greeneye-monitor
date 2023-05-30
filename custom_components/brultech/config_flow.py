@@ -163,13 +163,28 @@ CONFIG_ENTRY_DATA_SCHEMA = PORT_SCHEMA.extend(
     {vol.Optional(CONF_MONITORS, default=[]): MONITORS_SCHEMA}
 )
 
-PULSE_COUNTER_OPTIONS_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_NUMBER): cv.positive_int,
-        vol.Optional(CONF_TIME_UNIT, default=UnitOfTime.SECONDS): vol.Any(
-            UnitOfTime.SECONDS.value, UnitOfTime.MINUTES.value, UnitOfTime.HOURS.value
-        ),
-    }
+
+def make_pulse_counter_options_schema(time_unit: str = UnitOfTime.SECONDS.value):
+    return vol.Schema(
+        {
+            vol.Optional(CONF_TIME_UNIT, default=time_unit): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        UnitOfTime.SECONDS.value,
+                        UnitOfTime.MINUTES.value,
+                        UnitOfTime.HOURS.value,
+                    ],
+                    translation_key="time_unit",
+                )
+            )
+        }
+    )
+
+
+PULSE_COUNTER_OPTIONS_UI_SCHEMA = make_pulse_counter_options_schema()
+
+PULSE_COUNTER_OPTIONS_SCHEMA = PULSE_COUNTER_OPTIONS_UI_SCHEMA.extend(
+    {vol.Required(CONF_NUMBER): cv.positive_int}
 )
 
 PULSE_COUNTERS_OPTIONS_SCHEMA = vol.All(cv.ensure_list, [PULSE_COUNTER_OPTIONS_SCHEMA])
@@ -183,11 +198,16 @@ MONITOR_OPTIONS_SCHEMA = vol.Schema(
 
 MONITORS_OPTIONS_SCHEMA = vol.All(cv.ensure_list, [MONITOR_OPTIONS_SCHEMA])
 
-GLOBAL_OPTIONS_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_SEND_PACKET_DELAY, default=False): bool,
-    }
-)
+
+def make_global_options_schema(send_packet_delay: bool = False):
+    return vol.Schema(
+        {
+            vol.Optional(CONF_SEND_PACKET_DELAY, default=send_packet_delay): bool,
+        }
+    )
+
+
+GLOBAL_OPTIONS_SCHEMA = make_global_options_schema()
 
 CONFIG_ENTRY_OPTIONS_SCHEMA = GLOBAL_OPTIONS_SCHEMA.extend(
     {
@@ -463,25 +483,28 @@ class BrultechOptionsFlow(config_entries.OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> data_entry_flow.FlowResult:
         if user_input is not None:
-            options = deepcopy(self.config_entry.options)
+            options = deepcopy(dict(self.config_entry.options))
             options[CONF_SEND_PACKET_DELAY] = user_input[CONF_SEND_PACKET_DELAY]
             return self.async_create_entry(title="", data=options)
 
         return self.async_show_form(
             step_id="global_options",
-            data_schema=GLOBAL_OPTIONS_SCHEMA,
+            data_schema=make_global_options_schema(
+                send_packet_delay=self.config_entry.options[CONF_SEND_PACKET_DELAY]
+            ),
         )
 
     async def async_step_choose_monitor(
         self, user_input: dict[str, Any] | None = None
     ) -> data_entry_flow.FlowResult:
         if user_input is not None:
-            self._serial_number = user_input[CONF_SERIAL_NUMBER]
-            return await self.async_step_choose_pulse_counter(self, None)
+            self._serial_number = int(user_input[CONF_SERIAL_NUMBER])
+            return await self.async_step_choose_pulse_counter(None)
 
         serial_numbers = [
             str(monitor[CONF_SERIAL_NUMBER])
             for monitor in self.config_entry.options[CONF_MONITORS]
+            if monitor[CONF_PULSE_COUNTERS]
         ]
 
         schema = vol.Schema(
@@ -501,9 +524,78 @@ class BrultechOptionsFlow(config_entries.OptionsFlow):
             data_schema=schema,
         )
 
-    async def async_step_per_monitor_options(
+    async def async_step_choose_pulse_counter(
         self, user_input: dict[str, Any] | None = None
     ) -> data_entry_flow.FlowResult:
+        if user_input:
+            self._pulse_counter_number = int(user_input[CONF_NUMBER])
+            return await self.async_step_pulse_counter_options(None)
+
+        options = next(
+            filter(
+                lambda option: option[CONF_SERIAL_NUMBER] == self._serial_number,
+                self.config_entry.options[CONF_MONITORS],
+            )
+        )
+        numbers = [
+            selector.SelectOptionDict(
+                label=str(pulse_counter[CONF_NUMBER] + 1),
+                value=str(pulse_counter[CONF_NUMBER]),
+            )
+            for pulse_counter in options[CONF_PULSE_COUNTERS]
+        ]
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_NUMBER): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=numbers,
+                        multiple=False,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            }
+        )
+
         return self.async_show_form(
-            step_id="per_monitor_options", data_schema=MONITOR_OPTIONS_SCHEMA
+            step_id="choose_pulse_counter",
+            data_schema=schema,
+            description_placeholders={
+                CONF_SERIAL_NUMBER: str(self._serial_number),
+            },
+        )
+
+    async def async_step_pulse_counter_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> data_entry_flow.FlowResult:
+        options = self.config_entry.options
+        if user_input:
+            options = deepcopy(dict(options))
+
+        monitor_options = next(
+            filter(
+                lambda monitor: monitor[CONF_SERIAL_NUMBER] == self._serial_number,
+                options[CONF_MONITORS],
+            )
+        )
+        pulse_counter_options = next(
+            filter(
+                lambda pulse_counter: pulse_counter[CONF_NUMBER]
+                == self._pulse_counter_number,
+                monitor_options[CONF_PULSE_COUNTERS],
+            )
+        )
+
+        if user_input:
+            pulse_counter_options[CONF_TIME_UNIT] = user_input[CONF_TIME_UNIT]
+            return self.async_create_entry(title="", data=options)
+
+        return self.async_show_form(
+            step_id="pulse_counter_options",
+            data_schema=make_pulse_counter_options_schema(
+                pulse_counter_options[CONF_TIME_UNIT]
+            ),
+            description_placeholders={
+                "pulse_counter_number": f"{self._pulse_counter_number + 1}"
+            },
         )

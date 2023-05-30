@@ -66,6 +66,24 @@
         "data_description": {
           "serial_number": "Select the serial number of a monitor to edit its options."
         }
+      },
+      "choose_pulse_counter": {
+        "title": "Monitor {serial_number}",
+        "data": {
+          "number": "Pulse counter number"
+        },
+        "data_description": {
+          "number": "Select a pulse counter to edit its options"
+        }
+      },
+      "pulse_counter_options": {
+        "title": "Pulse counter {pulse_counter_number}",
+        "data": {
+          "time_unit": "Rate sensor time interval"
+        },
+        "data_description": {
+          "time_unit": "Select the time interval for reporting pulse rates."
+        }
       }
     }
   },
@@ -74,6 +92,13 @@
       "options": {
         "ct": "Measuring current",
         "pulse_counter": "Counting pulses"
+      }
+    },
+    "time_unit": {
+      "options": {
+        "s": "per second",
+        "min": "per minute",
+        "h": "per hour"
       }
     }
   },
