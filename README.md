@@ -1,4 +1,4 @@
-# GreenEye Monitor (GEM)
+# GreenEye Monitor (GEM) Custom Integration
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
@@ -10,8 +10,15 @@
 [![hacs][hacsbadge]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
 
-[![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
+
+The [Brultech](https://brultech.com) integration for Home Assistant allows you to create sensors for the various data channels of Brultech ECM-1220, ECM-1240, and/or GreenEye Monitor (GEM) energy monitors. Each current transformer (CT) channel, pulse counter, and temperature sensor appears in Home Assistant as one or more sensors, and can be used in automations.
+
+## Setup
+
+1. Add this repository as a [custom repository](https://hacs.xyz/docs/faq/custom_repositories) for integrations in [HACS](https://hacs.xyz/docs/setup/download) by using this My button:
+   [![Add repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jkeljo&repository=hacs-greeneye-monitor&category=Integration)
+2. Further documentation is viewable in HACS, or by clicking [here](info.md)
 
 ## Contributions are welcome!
 
@@ -30,10 +37,10 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [black-shield]: https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge
 [commits-shield]: https://img.shields.io/github/commit-activity/y/jkeljo/hacs-greeneye-monitor.svg?style=for-the-badge
 [commits]: https://github.com/jkeljo/hacs-greeneye-monitor/commits/main
+[config]: https://my.home-assistant.io/redirect/config_flow_start?domain=brultech
+[config-shield]: https://my.home-assistant.io/badges/config_flow_start.svg
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-[discord]: https://discord.gg/Qa5fW2R
-[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
 [license-shield]: https://img.shields.io/github/license/jkeljo/hacs-greeneye-monitor.svg?style=for-the-badge
