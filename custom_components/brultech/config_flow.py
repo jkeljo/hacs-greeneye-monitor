@@ -25,10 +25,14 @@ from homeassistant.core import callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import DiscoveryInfoType
 
+from .const import AUX5_TYPE_CT
+from .const import AUX5_TYPE_PULSE_COUNTER
+from .const import CONF_AUX5_TYPE
 from .const import CONF_CHANNELS
 from .const import CONF_COUNTED_QUANTITY
 from .const import CONF_COUNTED_QUANTITY_PER_PULSE
 from .const import CONF_DEVICE_CLASS
+from .const import CONF_IS_AUX
 from .const import CONF_MONITORS
 from .const import CONF_NET_METERING
 from .const import CONF_NUMBER
@@ -41,6 +45,8 @@ from .const import CONFIG_ENTRY_TITLE
 from .const import DOMAIN
 from .const import get_monitor_type_long_name
 from .const import get_monitor_type_short_name
+
+AUX5_TYPE_OPTIONS = [AUX5_TYPE_CT, AUX5_TYPE_PULSE_COUNTER]
 
 COUNTED_QUANTITY_OPTIONS = list(
     sorted(
@@ -77,6 +83,7 @@ PULSE_COUNTER_SCHEMA = vol.Schema(
     PULSE_COUNTER_CONFIG_UI_SCHEMA.extend(
         {
             vol.Required(CONF_NUMBER): cv.positive_int,
+            vol.Optional(CONF_IS_AUX, default=False): bool,
         }
     )
 )
@@ -115,6 +122,18 @@ def make_toplevel_schema(monitor: greeneye.monitor.Monitor | None = None) -> vol
                 vol.Optional(
                     CONF_TEMPERATURE_UNIT, default=default_temperature_unit
                 ): vol.Coerce(UnitOfTemperature),
+            }
+        )
+    if not monitor or monitor.type == MonitorType.ECM_1240:
+        schema = schema.extend(
+            {
+                vol.Optional(CONF_AUX5_TYPE): vol.Maybe(
+                    selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=AUX5_TYPE_OPTIONS, translation_key="aux5_type"
+                        )
+                    )
+                )
             }
         )
 
@@ -263,6 +282,7 @@ class BrultechConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._net_metering = monitor_info[CONF_NET_METERING]
             self._temperature_unit = monitor_info.get(CONF_TEMPERATURE_UNIT)
             self._pulse_counters = []
+            self._aux5_type = monitor_info.get(CONF_AUX5_TYPE)
             return await self.async_step_pulse_counter()
 
         serial_number = self.context["serial_number"]
@@ -299,17 +319,32 @@ class BrultechConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_pulse_counter(
         self, pulse_counter_info: DiscoveryInfoType | None = None
     ) -> data_entry_flow.FlowResult:
+        has_aux_pulse_counter = self._aux5_type == AUX5_TYPE_PULSE_COUNTER
+        num_pulse_counters = (
+            1 if has_aux_pulse_counter else len(self._monitor.pulse_counters)
+        )
         if pulse_counter_info:
-            self._pulse_counters.append(pulse_counter_info)
-            if len(self._pulse_counters) < len(self._monitor.pulse_counters):
+            self._pulse_counters.append(
+                PULSE_COUNTER_SCHEMA(
+                    {
+                        CONF_NUMBER: len(self._pulse_counters)
+                        if not has_aux_pulse_counter
+                        else 4,
+                        CONF_IS_AUX: has_aux_pulse_counter,
+                        **pulse_counter_info,
+                    }
+                )
+            )
+            if len(self._pulse_counters) < num_pulse_counters:
                 return await self.async_step_pulse_counter()
 
-        if pulse_counter_info or not self._monitor.pulse_counters:
+        if pulse_counter_info or num_pulse_counters == 0:
             config_entry = await self.async_set_unique_id(DOMAIN)
             assert config_entry
             new_data = deepcopy(dict(config_entry.data))
             monitor_data = {
                 CONF_SERIAL_NUMBER: self._monitor.serial_number,
+                CONF_AUX5_TYPE: self._aux5_type,
                 CONF_NET_METERING: self._net_metering,
                 CONF_PULSE_COUNTERS: self._pulse_counters,
             }
@@ -324,10 +359,11 @@ class BrultechConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     {
                         CONF_SERIAL_NUMBER: self._monitor.serial_number,
                         CONF_PULSE_COUNTERS: [
-                            {
-                                CONF_NUMBER: i,
-                                **PULSE_COUNTER_OPTIONS_SCHEMA({}),
-                            }
+                            PULSE_COUNTER_OPTIONS_SCHEMA(
+                                {
+                                    CONF_NUMBER: 4 if has_aux_pulse_counter else i,
+                                }
+                            )
                             for i in range(len(self._pulse_counters))
                         ],
                     }
@@ -350,7 +386,7 @@ class BrultechConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="pulse_counter",
             data_schema=PULSE_COUNTER_CONFIG_UI_SCHEMA,
             description_placeholders={
-                "pulse_counter_number": f"{len(self._pulse_counters) + 1}"
+                "pulse_counter_number": f"{(len(self._pulse_counters) + 1) if not has_aux_pulse_counter else 'Aux 5'}"
             },
         )
 

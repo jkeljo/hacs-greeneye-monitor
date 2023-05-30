@@ -6,10 +6,15 @@ from greeneye.monitor import Monitor
 from greeneye.monitor import MonitorType
 from homeassistant.helpers.entity import DeviceInfo
 
+AUX5_TYPE_CT = "ct"
+AUX5_TYPE_PULSE_COUNTER = "pulse_counter"
+
+CONF_AUX5_TYPE = "aux5_type"
 CONF_CHANNELS = "channels"
 CONF_COUNTED_QUANTITY = "counted_quantity"
 CONF_COUNTED_QUANTITY_PER_PULSE = "counted_quantity_per_pulse"
 CONF_DEVICE_CLASS = "device_class"
+CONF_IS_AUX = "is_aux"
 CONF_MONITORS = "monitors"
 CONF_NET_METERING = "net_metering"
 CONF_NUMBER = "number"
@@ -22,6 +27,7 @@ CONF_VOLTAGE_SENSORS = "voltage"
 CONFIG_ENTRY_TITLE = "Brultech"
 
 DEFAULT_UPDATE_INTERVAL = timedelta(minutes=30)
+DEVICE_TYPE_AUX = "aux"
 DEVICE_TYPE_CURRENT_TRANSFORMER = "channel"
 DEVICE_TYPE_PULSE_COUNTER = "pulse counter"
 DEVICE_TYPE_TEMPERATURE_SENSOR = "temperature"

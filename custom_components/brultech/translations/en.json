@@ -16,10 +16,12 @@
       "integration_discovery": {
         "title": "Configure new monitor",
         "data": {
+          "aux5_type": "Aux 5 mode",
           "temperature_unit": "Temperature unit",
           "net_metering": "Channels with net metering"
         },
         "data_description": {
+          "aux5_type": "Is Aux 5 measuring current or counting pulses?",
           "temperature_unit": "What unit of temperature is the monitor configured to use? Find this in the 'Temp Degree' section of the GEM UI. Note: this might be different from what Home Assistant is configured to use.",
           "net_metering": "Which channels in the monitor are configured for net metering? For GEM, find this in the 'Chan CT' section of the GEM UI."
         }
@@ -64,6 +66,14 @@
         "data_description": {
           "serial_number": "Select the serial number of a monitor to edit its options."
         }
+      }
+    }
+  },
+  "selector": {
+    "aux5_type": {
+      "options": {
+        "ct": "Measuring current",
+        "pulse_counter": "Counting pulses"
       }
     }
   },

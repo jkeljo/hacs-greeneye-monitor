@@ -24,6 +24,8 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import Throttle
 
+from .const import AUX5_TYPE_PULSE_COUNTER
+from .const import CONF_AUX5_TYPE
 from .const import CONF_COUNTED_QUANTITY
 from .const import CONF_COUNTED_QUANTITY_PER_PULSE
 from .const import CONF_DEVICE_CLASS
@@ -34,6 +36,7 @@ from .const import CONF_PULSE_COUNTERS
 from .const import CONF_SERIAL_NUMBER
 from .const import CONF_TIME_UNIT
 from .const import DEFAULT_UPDATE_INTERVAL
+from .const import DEVICE_TYPE_AUX
 from .const import DEVICE_TYPE_CURRENT_TRANSFORMER
 from .const import DEVICE_TYPE_PULSE_COUNTER
 from .const import DEVICE_TYPE_TEMPERATURE_SENSOR
@@ -169,6 +172,59 @@ async def async_setup_entry(
             if monitor.voltage_sensor:
                 entities.append(VoltageSensor(monitor))
 
+            for aux in monitor.aux:
+                channel = None
+                pulse_counter = None
+                if isinstance(aux, greeneye.monitor.Channel):
+                    channel = aux
+                else:
+                    assert aux.number == 4
+                    if monitor_config[CONF_AUX5_TYPE] == AUX5_TYPE_PULSE_COUNTER:
+                        pulse_counter = aux.pulse_counter
+                    else:
+                        channel = aux.channel
+
+                if channel:
+                    channel_net_metered = False
+                    entities.append(
+                        PowerSensor(
+                            monitor,
+                            channel,
+                            channel_net_metered,
+                        )
+                    )
+                    entities.append(
+                        EnergySensor(
+                            monitor,
+                            channel,
+                            channel_net_metered,
+                        )
+                    )
+                else:
+                    assert pulse_counter
+                    config = monitor_config[CONF_PULSE_COUNTERS][0]
+                    options = monitor_option[CONF_PULSE_COUNTERS][0]
+                    assert config[CONF_NUMBER] == pulse_counter.number
+                    assert options[CONF_NUMBER] == pulse_counter.number
+                    entities.append(
+                        PulseRateSensor(
+                            monitor,
+                            pulse_counter,
+                            config[CONF_COUNTED_QUANTITY],
+                            options[CONF_TIME_UNIT],
+                            config[CONF_COUNTED_QUANTITY_PER_PULSE],
+                        )
+                    )
+                    entities.append(
+                        PulseCountSensor(
+                            monitor,
+                            pulse_counter,
+                            config[CONF_DEVICE_CLASS],
+                            config[CONF_COUNTED_QUANTITY],
+                            config[CONF_COUNTED_QUANTITY_PER_PULSE],
+                        )
+                    )
+
             async_add_entities(entities)
 
             _LOGGER.info("Set up sensors for new monitor %d", monitor.serial_number)
@@ -258,7 +314,11 @@ class PowerSensor(MonitorSensor):
     ) -> None:
         """Construct the entity."""
         super().__init__(
-            monitor, DEVICE_TYPE_CURRENT_TRANSFORMER, "current", sensor, sensor.number
+            monitor,
+            DEVICE_TYPE_CURRENT_TRANSFORMER if not sensor.is_aux else DEVICE_TYPE_AUX,
+            "current" if not sensor.is_aux else "aux_current",
+            sensor,
+            sensor.number,
         )
         self._sensor: greeneye.monitor.Channel = self._sensor
         self._net_metering = net_metering
@@ -322,8 +382,8 @@ class EnergySensor(MonitorSensor):
         """Construct the entity."""
         super().__init__(
             monitor,
-            DEVICE_TYPE_CURRENT_TRANSFORMER,
-            "energy",
+            DEVICE_TYPE_CURRENT_TRANSFORMER if not sensor.is_aux else DEVICE_TYPE_AUX,
+            "energy" if not sensor.is_aux else "aux_energy",
             sensor,
             sensor.number,
             update_interval=DEFAULT_UPDATE_INTERVAL,
@@ -357,7 +417,11 @@ class PulseRateSensor(MonitorSensor):
     ) -> None:
         """Construct the entity."""
         super().__init__(
-            monitor, DEVICE_TYPE_PULSE_COUNTER, "pulse", sensor, sensor.number
+            monitor,
+            DEVICE_TYPE_PULSE_COUNTER if not sensor.is_aux else DEVICE_TYPE_AUX,
+            "pulse" if not sensor.is_aux else "aux_pulse",
+            sensor,
+            sensor.number,
         )
         self._sensor: greeneye.monitor.PulseCounter = self._sensor
         self._counted_quantity_per_pulse = counted_quantity_per_pulse
@@ -416,8 +480,8 @@ class PulseCountSensor(MonitorSensor):
         """Construct the entity."""
         super().__init__(
             monitor,
-            DEVICE_TYPE_PULSE_COUNTER,
-            "count",
+            DEVICE_TYPE_PULSE_COUNTER if not sensor.is_aux else DEVICE_TYPE_AUX,
+            "count" if not sensor.is_aux else "aux_count",
             sensor,
             sensor.number,
             update_interval=DEFAULT_UPDATE_INTERVAL,
