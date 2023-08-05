@@ -304,6 +304,7 @@ class PowerSensor(MonitorSensor):
 
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_device_class = SensorDeviceClass.POWER
+    _attr_name = None
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
@@ -467,6 +468,7 @@ class PulseCountSensor(MonitorSensor):
     """Entity showing pulse counts."""
 
     _attr_entity_registry_enabled_default = True
+    _attr_name = None
     _attr_state_class = SensorStateClass.TOTAL
 
     def __init__(
@@ -503,6 +505,7 @@ class TemperatureSensor(MonitorSensor):
     """Entity showing temperature from one temperature sensor."""
 
     _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_name = None
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
