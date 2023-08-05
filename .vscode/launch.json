@@ -14,7 +14,8 @@
           "localRoot": "${workspaceFolder}",
           "remoteRoot": "."
         }
-      ]
+      ],
+      "justMyCode": false
     },
     {
       // Example of attaching to my production server
@@ -28,7 +29,8 @@
           "localRoot": "${workspaceFolder}",
           "remoteRoot": "/usr/src/homeassistant"
         }
-      ]
+      ],
+      "justMyCode": false
     },
     {
       "name": "Python: Debug Tests",
