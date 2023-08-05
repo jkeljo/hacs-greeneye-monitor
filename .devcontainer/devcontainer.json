@@ -1,7 +1,7 @@
 // See https://aka.ms/vscode-remote/devcontainer.json for format details.
 {
   "name": "GreenEye Monitor (GEM) integration development",
-  "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.10-bullseye",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.11-bullseye",
   "runArgs": ["-e", "EDITOR=code --wait"],
   "postStartCommand": "scripts/bootstrap",
   "mounts": [
