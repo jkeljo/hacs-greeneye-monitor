@@ -6,6 +6,8 @@ from datetime import timedelta
 from typing import Any
 
 import greeneye
+from homeassistant.components.logbook import DOMAIN as LOGBOOK_DOMAIN
+from homeassistant.components.logbook import LogbookConfig
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorStateClass
@@ -19,9 +21,11 @@ from homeassistant.const import UnitOfPower
 from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.issue_registry import IssueSeverity
 from homeassistant.util import Throttle
 
 from .const import AUX5_TYPE_PULSE_COUNTER
@@ -293,10 +297,35 @@ class MonitorSensor(SensorEntity):
         """Wait for and connect to the sensor."""
         self._sensor.add_listener(self._update)
 
+        if (
+            self.state_class == SensorStateClass.TOTAL
+            or self.state_class == SensorStateClass.TOTAL_INCREASING
+        ):
+            self._warn_if_excluded_from_recorder()
+
     async def async_will_remove_from_hass(self) -> None:
         """Remove listener from the sensor."""
         if self._sensor:
             self._sensor.remove_listener(self._update)
+
+    def _warn_if_excluded_from_recorder(self) -> None:
+        """Posts a warning if this sensor is excluded from the recorder."""
+        logger_config: LogbookConfig = self.hass.data[LOGBOOK_DOMAIN]
+        if not logger_config.entity_filter:
+            return
+
+        if self.entity_id and not logger_config.entity_filter(self.entity_id):
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                f"{self.entity_id}_excluded",
+                is_fixable=False,
+                severity=IssueSeverity.WARNING,
+                translation_key="entity_excluded",
+                translation_placeholders={
+                    "entity_id": self.entity_id,
+                },
+            )
 
 
 class PowerSensor(MonitorSensor):
