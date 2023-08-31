@@ -9,5 +9,5 @@
   "iot_class": "local_push",
   "loggers": ["greeneye"],
   "requirements": ["greeneye_monitor==4.0.1"],
-  "version": "2023.08.06"
+  "version": "2023.08.30"
 }
