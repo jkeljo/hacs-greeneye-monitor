@@ -362,7 +362,7 @@ class PowerSensor(MonitorSensor):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return total wattseconds in the state dictionary."""
         if self._net_metering:
-            watt_seconds = self._sensor.polarized_watt_seconds
+            watt_seconds = self._sensor.net_watt_seconds
         else:
             watt_seconds = self._sensor.absolute_watt_seconds
 
@@ -425,7 +425,7 @@ class EnergySensor(MonitorSensor):
     def native_value(self) -> float | None:
         """Return the total number of kilowatt hours measured by this channel."""
         if self._net_metering:
-            return self._sensor.polarized_kilowatt_hours
+            return self._sensor.net_kilowatt_hours
         else:
             return self._sensor.absolute_kilowatt_hours
 
