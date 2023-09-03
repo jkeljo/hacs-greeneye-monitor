@@ -3,44 +3,31 @@ name: Issue
 about: Create a report to help us improve
 ---
 
-<!-- Before you open a new issue, search through the existing issues to see if others have had the same problem.
-
-Issues not containing the minimum requirements will be closed:
-
-- Issues without a description (using the header is not good enough) will be closed.
-- Issues without debug logging will be closed.
-- Issues without configuration will be closed
-
--->
-
-## Version information
-
-<!-- If you are not using the newest version, download and try that before opening an issue
-If you are unsure about the version check the manifest.json file.
--->
-
-Home Assistant version:
-
-HACS version:
-
-`hacs-greeneye-monitor` version:
-
-## Configuration
-
-```yaml
-Add your logs here.
-```
+<!-- Before you open a new issue, search through the existing issues to see if others have had the same problem. -->
 
 ## Describe the bug
 
 A clear and concise description of what the bug is.
 
-## Debug log
+## Diagnostics
 
-<!-- To enable debug logs check this https://www.home-assistant.io/components/logger/ -->
+<!--
+Upload a diagnostic dump. To do so:
 
-```text
+1. In Home Assistant, go to Settings -> Devices & Services -> GreenEye Monitor (GEM).
+2. Under "Hubs", find "GreenEye Monitor (GEM)", click the three dots, then click "Download diagnostics"
+-->
 
-Add your logs here.
+Drag and drop your downloaded diagnostics file here:
 
-```
+## Debug Logs
+
+<!--
+AFTER you have downloaded the diagnostic dump, do the following (still from the GreenEye Monitor settings screen):
+1. Click "Enable Debug Logging"
+2. In the three dots menu, click "Reload"
+3. Return to your overview dashboard and wait until data starts to come in from all of your GEMs
+4. Return to the settings screen and click "Disable Debug Logging". It will download a log file.
+-->
+
+Drag and drop your downloaded log file here:
