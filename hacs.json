@@ -1,7 +1,6 @@
 {
   "name": "GreenEye Monitor (GEM)",
   "hacs": "1.32.1",
-  "domains": ["number", "sensor"],
   "iot_class": "Cloud Polling",
   "homeassistant": "2023.8.1"
 }
