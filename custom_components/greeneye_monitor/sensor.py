@@ -361,12 +361,9 @@ class PowerSensor(MonitorSensor):
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return total wattseconds in the state dictionary."""
-        if self._net_metering:
-            watt_seconds = self._sensor.net_watt_seconds
-            if watt_seconds:
-                watt_seconds = abs(watt_seconds)
-        else:
-            watt_seconds = self._sensor.absolute_watt_seconds
+        watt_seconds = self._sensor.watt_seconds
+        if self._net_metering and watt_seconds:
+            watt_seconds = abs(watt_seconds)
 
         return {DATA_WATT_SECONDS: watt_seconds}
 
@@ -426,11 +423,9 @@ class EnergySensor(MonitorSensor):
     @property
     def native_value(self) -> float | None:
         """Return the total number of kilowatt hours measured by this channel."""
-        if self._net_metering:
-            net_kwh = self._sensor.net_kilowatt_hours
-            return abs(net_kwh) if net_kwh else None
-        else:
-            return self._sensor.absolute_kilowatt_hours
+        kwh = self._sensor.kilowatt_hours
+        if self._net_metering and kwh:
+            kwh = abs(kwh)
 
 
 class PulseRateSensor(MonitorSensor):
