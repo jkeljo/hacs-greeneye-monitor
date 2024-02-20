@@ -264,6 +264,7 @@ class MonitorSensor(SensorEntity):
     _attr_entity_registry_enabled_default = False
     _attr_has_entity_name = True
     _attr_should_poll = False
+    _attr_suggested_display_precision = 0
 
     def __init__(
         self,
