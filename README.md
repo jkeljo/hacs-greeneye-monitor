@@ -16,9 +16,10 @@ The [Brultech](https://brultech.com) integration for Home Assistant allows you t
 
 ## Setup
 
-1. Add this repository as a [custom repository](https://hacs.xyz/docs/faq/custom_repositories) for integrations in [HACS](https://hacs.xyz/docs/use/) by using this My button:
+1. Install [HACS](https://hacs.xyz/docs/use/) if you haven't already
+2. Add this repository as a [custom repository](https://hacs.xyz/docs/faq/custom_repositories) for integrations in [HACS](https://hacs.xyz/docs/use/) by using this My button:
    [![Add repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jkeljo&repository=hacs-greeneye-monitor&category=Integration)
-2. Further documentation is viewable in HACS, or by clicking [here](info.md)
+3. Further documentation is viewable in HACS, or by clicking [here](info.md)
 
 ## Contributions are welcome!
 
